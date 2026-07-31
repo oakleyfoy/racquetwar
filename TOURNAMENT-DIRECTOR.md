@@ -10,7 +10,7 @@ password-protected review area at `/tournament-director/admin`.
 | `/tournament-director` | Public application form |
 | `/tournament-director/api/submit` | Form submission endpoint |
 | `/tournament-director/admin` | Application list, filters, CSV export |
-| `/tournament-director/admin/[id]` | Full application, status and internal notes |
+| `/tournament-director/admin/[id]` | Full application, status, internal notes, permanent delete |
 | `/tournament-director/admin/login` | Admin sign in |
 | `/tournament-director/api/admin/export` | CSV download |
 

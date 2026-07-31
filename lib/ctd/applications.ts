@@ -264,6 +264,16 @@ export async function updateApplication(
   );
 }
 
+/** Permanently removes one row. Scoped to this program so ids cannot cross forms. */
+export async function deleteApplication(id: string): Promise<boolean> {
+  const result = await query(
+    `delete from ctd_applications where id = $1 and program = $2`,
+    [id, PROGRAM_SLUG],
+  );
+
+  return (result.rowCount ?? 0) > 0;
+}
+
 export async function countByStatus() {
   const result = await query<{ status: string; count: string }>(
     `select status, count(*)::text as count

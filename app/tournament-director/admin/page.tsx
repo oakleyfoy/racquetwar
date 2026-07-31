@@ -36,9 +36,9 @@ function buildExportHref(filters: ApplicationFilters) {
 export default async function AdminApplicationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; search?: string }>;
+  searchParams: Promise<{ status?: string; search?: string; deleted?: string; error?: string }>;
 }) {
-  const { status = "", search = "" } = await searchParams;
+  const { status = "", search = "", deleted, error } = await searchParams;
   const filters: ApplicationFilters = { status, search };
 
   if (!isDatabaseConfigured()) {
@@ -99,6 +99,18 @@ export default async function AdminApplicationsPage({
             </form>
           </div>
         </div>
+
+        {deleted ? (
+          <div className="ctd-saved" role="status">
+            Application deleted.
+          </div>
+        ) : null}
+
+        {error === "notfound" ? (
+          <div className="ctd-alert" role="alert">
+            That application was not found. It may have been deleted already.
+          </div>
+        ) : null}
 
         <div className="ctd-statusbar">
           {APPLICATION_STATUSES.map((value) => (

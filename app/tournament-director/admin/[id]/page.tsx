@@ -6,6 +6,8 @@ import { getApplication } from "@/lib/ctd/applications";
 import { APPLICATION_STATUSES, STATUS_LABELS } from "@/lib/ctd/fields";
 import { applicantName, buildReport, formatSubmittedAt } from "@/lib/ctd/report";
 
+import { AdminDeleteApplicationForm } from "@/components/ctd/admin-delete-application-form";
+
 import { updateApplicationAction } from "../actions";
 
 export const runtime = "nodejs";
@@ -131,6 +133,11 @@ export default async function AdminApplicationDetailPage({
             </dl>
           </section>
         ))}
+
+        <AdminDeleteApplicationForm
+          id={application.id}
+          applicantLabel={applicantName(application)}
+        />
       </div>
     </main>
   );

@@ -10,10 +10,13 @@ import {
   isAdminConfigured,
   verifyPassword,
 } from "@/lib/ctd/admin-session";
-import { updateApplication } from "@/lib/ctd/applications";
+import { deleteApplication, updateApplication } from "@/lib/ctd/applications";
 
 const ADMIN_PATH = "/tournament-director/admin";
 const LOGIN_PATH = `${ADMIN_PATH}/login`;
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function loginAction(formData: FormData) {
   if (!isAdminConfigured()) {
@@ -49,4 +52,12 @@ export async function updateApplicationAction(formData: FormData) {
   });
 
   redirect(`${ADMIN_PATH}/${id}?saved=1`);
+}
+
+export async function deleteApplicationAction(formData: FormData) {
+  const id = String(formData.get("id") ?? "");
+  if (!UUID_PATTERN.test(id)) redirect(ADMIN_PATH);
+
+  const deleted = await deleteApplication(id);
+  redirect(deleted ? `${ADMIN_PATH}?deleted=1` : `${ADMIN_PATH}?error=notfound`);
 }

@@ -607,6 +607,46 @@
   display: inline-block;
 }
 
+.ctd-deletepanel {
+  margin-top: 36px;
+  padding-top: 24px;
+  border-top: 1px solid var(--ctd-line);
+}
+
+.ctd-deletepanel-title {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ctd-ink);
+}
+
+.ctd-deletepanel-hint {
+  margin: 0 0 16px;
+  max-width: 52rem;
+  font-size: 0.92rem;
+  color: var(--ctd-ink-muted);
+}
+
+.ctd-deletebutton {
+  border: 1px solid var(--ctd-danger);
+  border-radius: 999px;
+  background: #fff;
+  padding: 10px 20px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--ctd-danger);
+  cursor: pointer;
+}
+
+.ctd-deletebutton:hover {
+  background: #fff5f4;
+}
+
+.ctd-deletebutton:focus-visible {
+  outline: 2px solid var(--ctd-danger);
+  outline-offset: 2px;
+}
+
 .ctd-statusbar {
   display: flex;
   flex-wrap: wrap;
