@@ -235,6 +235,8 @@ export const HOW_HEARD_OPTIONS = [
   "Teaching Pro",
   "Club",
   "Google",
+  "Email",
+  "Text Message",
   "Other",
 ] as const;
 
