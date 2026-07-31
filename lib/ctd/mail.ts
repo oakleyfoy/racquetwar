@@ -1,0 +1,334 @@
+import nodemailer from "nodemailer";
+
+import { PROGRAM_TITLE, formatTerritory, type CtdApplicationInput } from "./fields";
+import { applicantName, buildReport, type ReportSection } from "./report";
+
+type MicrosoftMailConfig = {
+  clientId: string;
+  clientSecret: string;
+  tenantId: string;
+  from: string;
+  to: string;
+};
+
+type SmtpMailConfig = {
+  host: string;
+  port: number;
+  secure: boolean;
+  user: string;
+  pass: string;
+  from: string;
+  to: string;
+};
+
+type MailPayload = {
+  to: string;
+  subject: string;
+  text: string;
+  html: string;
+  replyTo?: string;
+};
+
+export type MailMode = "microsoft-graph" | "smtp" | "skipped";
+
+function getSharedMailboxSettings() {
+  const from = process.env.MAIL_FROM_EMAIL ?? process.env.FORM_FROM_EMAIL;
+  const to = process.env.CTD_TO_EMAIL ?? process.env.INQUIRY_TO_EMAIL;
+
+  if (!from || !to) return null;
+
+  return { from, to };
+}
+
+function getMicrosoftMailConfig(): MicrosoftMailConfig | null {
+  const shared = getSharedMailboxSettings();
+  const clientId = process.env.MICROSOFT_CLIENT_ID;
+  const clientSecret = process.env.MICROSOFT_CLIENT_SECRET;
+  const tenantId = process.env.MICROSOFT_TENANT_ID;
+
+  if (!shared || !clientId || !clientSecret || !tenantId) return null;
+
+  return { clientId, clientSecret, tenantId, from: shared.from, to: shared.to };
+}
+
+function getSmtpMailConfig(): SmtpMailConfig | null {
+  const shared = getSharedMailboxSettings();
+  const host = process.env.SMTP_HOST;
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+
+  if (!shared || !host || !user || !pass) return null;
+
+  return {
+    host,
+    port: Number(process.env.SMTP_PORT ?? "587"),
+    secure: process.env.SMTP_SECURE === "true",
+    user,
+    pass,
+    from: shared.from,
+    to: shared.to,
+  };
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function renderSectionsHtml(sections: ReportSection[]) {
+  return sections
+    .map(
+      (section) => `
+        <h3 style="margin:28px 0 10px;font-size:15px;letter-spacing:0.08em;text-transform:uppercase;color:#006d56;">
+          ${escapeHtml(section.title)}
+        </h3>
+        <table style="border-collapse:collapse;width:100%;max-width:720px;">
+          <tbody>
+            ${section.rows
+              .map(
+                (row) => `
+                  <tr>
+                    <td style="padding:8px 12px;border:1px solid #dbe7e1;background:#f2f7f3;font-weight:700;width:240px;vertical-align:top;">
+                      ${escapeHtml(row.label)}
+                    </td>
+                    <td style="padding:8px 12px;border:1px solid #dbe7e1;vertical-align:top;">
+                      ${escapeHtml(row.value).replaceAll("\n", "<br>")}
+                    </td>
+                  </tr>`,
+              )
+              .join("")}
+          </tbody>
+        </table>`,
+    )
+    .join("");
+}
+
+function renderSectionsText(sections: ReportSection[]) {
+  return sections
+    .map((section) => {
+      const rows = section.rows
+        .map((row) => `${row.label}: ${row.value}`)
+        .join("\n");
+      return `${section.title.toUpperCase()}\n${rows}`;
+    })
+    .join("\n\n");
+}
+
+function buildInternalHtml(application: CtdApplicationInput) {
+  const sections = buildReport(application);
+
+  return `
+    <div style="font-family:Arial,Helvetica,sans-serif;color:#10181a;line-height:1.6;">
+      <h2 style="margin:0 0 6px;color:#10181a;">New Certified Tournament Director application</h2>
+      <p style="margin:0 0 4px;font-size:15px;">
+        <strong>${escapeHtml(applicantName(application))}</strong> &middot;
+        ${escapeHtml(application.email)} &middot; ${escapeHtml(application.mobilePhone)}
+      </p>
+      <p style="margin:0;font-size:15px;color:#4a5a55;">
+        Territory: ${escapeHtml(formatTerritory(application.primaryTerritory))}
+      </p>
+      ${renderSectionsHtml(sections)}
+    </div>`;
+}
+
+function buildInternalText(application: CtdApplicationInput) {
+  return [
+    "New Certified Tournament Director application",
+    "",
+    `Name: ${applicantName(application)}`,
+    `Email: ${application.email}`,
+    `Phone: ${application.mobilePhone}`,
+    `Territory: ${formatTerritory(application.primaryTerritory)}`,
+    "",
+    renderSectionsText(buildReport(application)),
+  ].join("\n");
+}
+
+function buildAutoReplyHtml(application: CtdApplicationInput) {
+  return `
+    <div style="font-family:Arial,Helvetica,sans-serif;color:#10181a;line-height:1.7;max-width:640px;">
+      <h2 style="margin:0 0 16px;color:#006d56;">We received your application</h2>
+      <p style="margin:0 0 16px;">Hi ${escapeHtml(application.firstName)},</p>
+      <p style="margin:0 0 16px;">
+        Thank you for applying to become a Founding Certified Tournament Director with Racquet War.
+        This is an automatic confirmation that your application has been received.
+      </p>
+      <div style="margin:20px 0;padding:16px;border:1px solid #dbe7e1;background:#f2f7f3;">
+        <p style="margin:0 0 8px;font-weight:700;">What we received</p>
+        <p style="margin:0;">Territory of interest: ${escapeHtml(formatTerritory(application.primaryTerritory))}</p>
+        <p style="margin:0;">Email: ${escapeHtml(application.email)}</p>
+        <p style="margin:0;">Phone: ${escapeHtml(application.mobilePhone)}</p>
+      </div>
+      <p style="margin:0 0 16px;">
+        Racquet War is selecting a limited number of Founding Certified Tournament Directors, and
+        acceptance is competitive. Our team will review your application and follow up regarding
+        next steps, including interviews and territory availability.
+      </p>
+      <p style="margin:0 0 16px;">
+        If you need to add anything, simply reply to this email and it will reach our team directly.
+      </p>
+      <p style="margin:24px 0 0;font-weight:700;color:#006d56;">Racquet War</p>
+    </div>`;
+}
+
+function buildAutoReplyText(application: CtdApplicationInput) {
+  return [
+    `Hi ${application.firstName},`,
+    "",
+    "Thank you for applying to become a Founding Certified Tournament Director with Racquet War.",
+    "This is an automatic confirmation that your application has been received.",
+    "",
+    `Territory of interest: ${formatTerritory(application.primaryTerritory)}`,
+    `Email: ${application.email}`,
+    `Phone: ${application.mobilePhone}`,
+    "",
+    "Racquet War is selecting a limited number of Founding Certified Tournament Directors, and",
+    "acceptance is competitive. Our team will review your application and follow up regarding",
+    "next steps, including interviews and territory availability.",
+    "",
+    "If you need to add anything, simply reply to this email and it will reach our team directly.",
+    "",
+    "Racquet War",
+  ].join("\n");
+}
+
+async function fetchMicrosoftAccessToken(config: MicrosoftMailConfig) {
+  const response = await fetch(
+    `https://login.microsoftonline.com/${encodeURIComponent(config.tenantId)}/oauth2/v2.0/token`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id: config.clientId,
+        client_secret: config.clientSecret,
+        scope: "https://graph.microsoft.com/.default",
+        grant_type: "client_credentials",
+      }),
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error("Unable to authenticate with Microsoft Graph.");
+  }
+
+  const result = (await response.json()) as { access_token?: string };
+  if (!result.access_token) {
+    throw new Error("Microsoft Graph access token was missing.");
+  }
+
+  return result.access_token;
+}
+
+async function sendMicrosoftMail(
+  config: MicrosoftMailConfig,
+  payload: MailPayload,
+) {
+  const accessToken = await fetchMicrosoftAccessToken(config);
+
+  const response = await fetch(
+    `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(config.from)}/sendMail`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message: {
+          subject: payload.subject,
+          body: { contentType: "HTML", content: payload.html },
+          toRecipients: [{ emailAddress: { address: payload.to } }],
+          replyTo: payload.replyTo
+            ? [{ emailAddress: { address: payload.replyTo } }]
+            : undefined,
+        },
+        saveToSentItems: true,
+      }),
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Microsoft Graph sendMail failed with status ${response.status}.`,
+    );
+  }
+}
+
+async function sendSmtpMail(config: SmtpMailConfig, payload: MailPayload) {
+  const transporter = nodemailer.createTransport({
+    host: config.host,
+    port: config.port,
+    secure: config.secure,
+    auth: { user: config.user, pass: config.pass },
+  });
+
+  await transporter.sendMail({
+    from: config.from,
+    to: payload.to,
+    replyTo: payload.replyTo,
+    subject: payload.subject,
+    text: payload.text,
+    html: payload.html,
+  });
+}
+
+/**
+ * Sends the staff notification and the applicant auto-reply. Returns the
+ * transport that was used, or "skipped" when no mail transport is configured.
+ */
+export async function dispatchApplicationEmails(
+  application: CtdApplicationInput,
+) {
+  const microsoft = getMicrosoftMailConfig();
+  const smtp = getSmtpMailConfig();
+  const transport = microsoft ?? smtp;
+
+  if (!transport) {
+    return { mode: "skipped" as MailMode, autoReplyFailed: false };
+  }
+
+  const send = (payload: MailPayload) =>
+    microsoft
+      ? sendMicrosoftMail(microsoft, payload)
+      : sendSmtpMail(smtp as SmtpMailConfig, payload);
+
+  const subjectTerritory = formatTerritory(application.primaryTerritory);
+
+  await send({
+    to: transport.to,
+    replyTo: application.email,
+    subject: `CTD application: ${applicantName(application)}${
+      subjectTerritory ? ` (${subjectTerritory})` : ""
+    }`,
+    text: buildInternalText(application),
+    html: buildInternalHtml(application),
+  });
+
+  // A failed auto-reply must not fail the submission; the application is already saved.
+  let autoReplyFailed = false;
+  try {
+    await send({
+      to: application.email,
+      replyTo: transport.to,
+      subject: `We received your ${PROGRAM_TITLE.replace("Apply to Become a ", "")} application`,
+      text: buildAutoReplyText(application),
+      html: buildAutoReplyHtml(application),
+    });
+  } catch (error) {
+    autoReplyFailed = true;
+    console.error("CTD auto-reply failed", error);
+  }
+
+  return {
+    mode: (microsoft ? "microsoft-graph" : "smtp") as MailMode,
+    autoReplyFailed,
+  };
+}
+
+export function isMailConfigured() {
+  return Boolean(getMicrosoftMailConfig() ?? getSmtpMailConfig());
+}
