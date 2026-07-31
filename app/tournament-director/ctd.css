@@ -2,9 +2,8 @@
  * Scoped styling for the Certified Tournament Director route.
  *
  * Everything is namespaced under .ctd and written as plain CSS rather than
- * utility classes, because the site-wide globals.css currently carries an
- * unrelated red/white/blue theme with `!important` overrides. Keeping this
- * route self-contained means the two cannot interfere with each other.
+ * utility classes, so the route stays self-contained and cannot be disturbed by
+ * whatever global theme the rest of racquetwar.com adopts when it moves here.
  */
 
 .ctd {

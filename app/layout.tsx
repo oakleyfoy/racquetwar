@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 
 import "./globals.css";
-import { SiteChrome } from "@/components/site-chrome";
 
 export const metadata: Metadata = {
-  title: "Racquet War | Competitive Tennis Tournaments & Travel Experiences",
+  title: "Racquet War",
   description:
-    "Join our well-organized tournament at beautiful resorts. Experience the fun, create lasting memories, and play with your favorite person regardless of rating.",
+    "Apply to become a Founding Certified Tournament Director with Racquet War.",
 };
 
 export default function RootLayout({
@@ -16,9 +15,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>
-        <SiteChrome>{children}</SiteChrome>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

@@ -1,30 +1,75 @@
 import Link from "next/link";
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://racquetwar.com";
+
+/**
+ * Styled inline rather than with a stylesheet: ctd.css is scoped to the
+ * tournament-director route and is not guaranteed to be loaded here.
+ */
 export default function NotFound() {
   return (
-    <div className="page-shell section-spacing">
-      <section className="hero-card mx-auto max-w-4xl rounded-[2rem] p-10 text-center">
-        <p className="eyebrow">Page not found</p>
-        <h1 className="mt-4 text-5xl font-semibold tracking-tight text-slate-900 sm:text-6xl">Let&apos;s get you back to the right event.</h1>
-        <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-slate-600">
-          The page you were looking for is not here, but the key sections of the site are designed to make recovery
-          easy.
-        </p>
-        <div className="mt-8 flex flex-wrap justify-center gap-4">
-          <Link
-            href="/events"
-            className="rounded-full bg-cyan-600 px-6 py-3 text-base font-semibold text-white transition hover:bg-cyan-500"
-          >
-            View upcoming events
-          </Link>
-          <Link
-            href="/draws-results"
-            className="rounded-full border border-sky-200 bg-white px-6 py-3 text-base font-semibold text-slate-900 transition hover:border-sky-300"
-          >
-            Go to draws & results
-          </Link>
-        </div>
-      </section>
-    </div>
+    <main
+      style={{
+        display: "flex",
+        minHeight: "100vh",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 20,
+        padding: "48px 24px",
+        textAlign: "center",
+      }}
+    >
+      <p
+        style={{
+          margin: 0,
+          fontSize: 13,
+          fontWeight: 700,
+          letterSpacing: "0.12em",
+          textTransform: "uppercase",
+          color: "#55655f",
+        }}
+      >
+        Page not found
+      </p>
+      <h1 style={{ margin: 0, fontSize: 32, color: "#00513f" }}>
+        We could not find that page.
+      </h1>
+      <p style={{ margin: 0, maxWidth: 460, color: "#55655f" }}>
+        This site hosts the Racquet War Certified Tournament Director
+        application.
+      </p>
+      <div
+        style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 8 }}
+      >
+        <Link
+          href="/tournament-director"
+          style={{
+            borderRadius: 999,
+            background: "#006d56",
+            padding: "12px 22px",
+            fontWeight: 600,
+            color: "#ffffff",
+            textDecoration: "none",
+          }}
+        >
+          Go to the application
+        </Link>
+        <a
+          href={SITE_URL}
+          style={{
+            borderRadius: 999,
+            border: "1px solid #d7e3dd",
+            background: "#ffffff",
+            padding: "12px 22px",
+            fontWeight: 600,
+            color: "#10181a",
+            textDecoration: "none",
+          }}
+        >
+          Back to racquetwar.com
+        </a>
+      </div>
+    </main>
   );
 }
