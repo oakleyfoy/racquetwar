@@ -1,6 +1,10 @@
 import Link from "next/link";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://racquetwar.com";
+const MAIN_SITE_URL =
+  process.env.NEXT_PUBLIC_MAIN_SITE_URL ??
+  "https://wartournaments.com/racquet-war/";
+
+const MAIN_SITE_LABEL = new URL(MAIN_SITE_URL).hostname.replace(/^www\./, "");
 
 /**
  * Styled inline rather than with a stylesheet: ctd.css is scoped to the
@@ -56,7 +60,7 @@ export default function NotFound() {
           Go to the application
         </Link>
         <a
-          href={SITE_URL}
+          href={MAIN_SITE_URL}
           style={{
             borderRadius: 999,
             border: "1px solid #d7e3dd",
@@ -67,7 +71,7 @@ export default function NotFound() {
             textDecoration: "none",
           }}
         >
-          Back to racquetwar.com
+          Back to {MAIN_SITE_LABEL}
         </a>
       </div>
     </main>

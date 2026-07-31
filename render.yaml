@@ -8,6 +8,8 @@ services:
     buildCommand: npm ci && npm run build
     startCommand: npm run start
     healthCheckPath: /tournament-director
+    domains:
+      - apply.wartournaments.com
     envVars:
       - key: NODE_VERSION
         value: "22"
@@ -34,8 +36,13 @@ services:
         sync: false
       - key: ADMIN_SESSION_SECRET
         generateValue: true
+      # Where this app is served from, used for canonical and share URLs.
       - key: NEXT_PUBLIC_SITE_URL
-        value: https://racquetwar.com
+        value: https://apply.wartournaments.com
+      # Where the logo and back button lead. racquetwar.com now only serves a
+      # notice saying Racquet War events moved to War Tournaments.
+      - key: NEXT_PUBLIC_MAIN_SITE_URL
+        value: https://wartournaments.com/racquet-war/
 
 databases:
   - name: racquetwar-db

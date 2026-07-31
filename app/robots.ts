@@ -1,16 +1,13 @@
 import type { MetadataRoute } from "next";
 
 /**
- * While WordPress still serves racquetwar.com, this app is reachable only at its
- * raw Render hostname and through the Cloudflare rule for /tournament-director.
- * Crawlers should not index the Render hostname directly, so indexing is blocked
- * until it is explicitly enabled.
+ * Indexing is blocked unless explicitly enabled. That default dates from when
+ * this app also served a half-built clone of the main site, which had no
+ * business appearing in search.
  *
- * IMPORTANT: set ALLOW_SEARCH_INDEXING=true when this app takes over the full
- * racquetwar.com domain, otherwise the entire site will stay out of search.
- *
- * Note that /robots.txt is not proxied by Cloudflare, so this file only affects
- * the Render hostname and never overrides the live WordPress robots.txt.
+ * It now serves only the application form, so enabling indexing is a reasonable
+ * choice if the form should be discoverable. The admin area and the API stay
+ * excluded either way.
  */
 export default function robots(): MetadataRoute.Robots {
   const allowIndexing = process.env.ALLOW_SEARCH_INDEXING === "true";

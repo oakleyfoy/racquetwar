@@ -99,29 +99,31 @@ site, so it uses `starter`.
 After the first deploy, set the secret values (mail, reCAPTCHA, admin password)
 in the Render dashboard.
 
-## Pointing racquetwar.com at the form
+## Domains
 
-While WordPress still serves the main site, use a Cloudflare rule to proxy the
-form path to Render rather than moving DNS:
+Racquet War events are run by War Tournaments. `racquetwar.com` serves only a
+notice saying so, and its DNS sits in a Cloudflare account we do not control,
+so the form is served from a subdomain of `wartournaments.com` instead, whose
+DNS is managed at Namecheap.
 
-- Proxy `racquetwar.com/tournament-director*` to the Render service.
-- Also proxy `racquetwar.com/_next/*`, otherwise the JavaScript, CSS and images
-  the page depends on will 404.
+- The app answers on `apply.wartournaments.com`, declared under `domains` in
+  `render.yaml` and backed by a CNAME to `racquetwar-site.onrender.com`.
+- `NEXT_PUBLIC_SITE_URL` is that origin, used for canonical and share URLs.
+- `NEXT_PUBLIC_MAIN_SITE_URL` is where the logo and back button lead, which is
+  the live Racquet War section of the War Tournaments site. It is deliberately
+  a separate value; sending applicants to racquetwar.com is a dead end.
 
-Link to `https://racquetwar.com/tournament-director` from WordPress.
+Any domain serving the form must also be listed on the reCAPTCHA v3 key, or
+every submission is rejected even though the page loads normally.
 
 ## Search indexing
 
-`app/robots.ts` blocks all crawling unless `ALLOW_SEARCH_INDEXING=true`. This
-keeps the raw Render hostname out of search results while WordPress owns the
-domain.
+`app/robots.ts` blocks all crawling unless `ALLOW_SEARCH_INDEXING=true`.
 
-When this app eventually serves the whole of racquetwar.com, set
-`ALLOW_SEARCH_INDEXING=true`. If that is missed, the entire site will stay out
-of search results.
-
-Note that `/robots.txt` is not proxied by the Cloudflare rule above, so it only
-affects the Render hostname and never overrides the live WordPress robots.txt.
+That default made sense when this app also carried a half-built clone of the
+main site. It now serves only the application form, so indexing can reasonably
+be enabled if the form should be findable in search. Leave it unset to keep the
+form reachable only by people who are sent a link.
 
 ## Adding a second application form later
 
