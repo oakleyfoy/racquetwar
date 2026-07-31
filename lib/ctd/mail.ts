@@ -196,6 +196,19 @@ function buildAutoReplyText(application: CtdApplicationInput) {
   ].join("\n");
 }
 
+/**
+ * Microsoft returns the useful part of a failure in the body (AADSTS codes for
+ * auth, ErrorAccessDenied and friends for sendMail), so it is worth keeping.
+ * Truncated because it is echoed to the admin mail test.
+ */
+async function readErrorDetail(response: Response) {
+  try {
+    return (await response.text()).slice(0, 600).trim();
+  } catch {
+    return "";
+  }
+}
+
 async function fetchMicrosoftAccessToken(config: MicrosoftMailConfig) {
   const response = await fetch(
     `https://login.microsoftonline.com/${encodeURIComponent(config.tenantId)}/oauth2/v2.0/token`,
@@ -212,7 +225,9 @@ async function fetchMicrosoftAccessToken(config: MicrosoftMailConfig) {
   );
 
   if (!response.ok) {
-    throw new Error("Unable to authenticate with Microsoft Graph.");
+    throw new Error(
+      `Microsoft Graph authentication failed with status ${response.status}. ${await readErrorDetail(response)}`.trim(),
+    );
   }
 
   const result = (await response.json()) as { access_token?: string };
@@ -253,7 +268,7 @@ async function sendMicrosoftMail(
 
   if (!response.ok) {
     throw new Error(
-      `Microsoft Graph sendMail failed with status ${response.status}.`,
+      `Microsoft Graph sendMail as ${config.from} failed with status ${response.status}. ${await readErrorDetail(response)}`.trim(),
     );
   }
 }
@@ -331,4 +346,64 @@ export async function dispatchApplicationEmails(
 
 export function isMailConfigured() {
   return Boolean(getMicrosoftMailConfig() ?? getSmtpMailConfig());
+}
+
+/**
+ * Reports which transport would be used and which variables are populated,
+ * without ever revealing a secret. Backs the admin mail test, because a missing
+ * variable and a rejected credential look identical from the outside.
+ */
+export function describeMailConfig() {
+  const shared = getSharedMailboxSettings();
+  const microsoft = getMicrosoftMailConfig();
+  const smtp = getSmtpMailConfig();
+
+  const isSet = (name: string) => Boolean(process.env[name]?.trim());
+
+  return {
+    transport: microsoft ? "microsoft-graph" : smtp ? "smtp" : "none",
+    sendsAs: shared?.from ?? null,
+    notifies: shared?.to ?? null,
+    variables: {
+      MAIL_FROM_EMAIL: isSet("MAIL_FROM_EMAIL"),
+      CTD_TO_EMAIL: isSet("CTD_TO_EMAIL"),
+      MICROSOFT_TENANT_ID: isSet("MICROSOFT_TENANT_ID"),
+      MICROSOFT_CLIENT_ID: isSet("MICROSOFT_CLIENT_ID"),
+      MICROSOFT_CLIENT_SECRET: isSet("MICROSOFT_CLIENT_SECRET"),
+      SMTP_HOST: isSet("SMTP_HOST"),
+      SMTP_USER: isSet("SMTP_USER"),
+      SMTP_PASS: isSet("SMTP_PASS"),
+    },
+  };
+}
+
+/** Sends a single plain message so delivery can be checked without applying. */
+export async function sendTestEmail(recipient?: string) {
+  const microsoft = getMicrosoftMailConfig();
+  const smtp = getSmtpMailConfig();
+  const transport = microsoft ?? smtp;
+
+  if (!transport) {
+    throw new Error(
+      "No mail transport is configured. Set the Microsoft Graph or SMTP variables.",
+    );
+  }
+
+  const to = recipient?.trim() || transport.to;
+  const sentAt = new Date().toISOString();
+
+  const payload: MailPayload = {
+    to,
+    subject: "Racquet War mail test",
+    text: `This is a test message from the Certified Tournament Director form.\n\nSent at ${sentAt}\nFrom mailbox: ${transport.from}`,
+    html: `<p>This is a test message from the Certified Tournament Director form.</p><p>Sent at ${escapeHtml(sentAt)}<br>From mailbox: ${escapeHtml(transport.from)}</p>`,
+  };
+
+  if (microsoft) {
+    await sendMicrosoftMail(microsoft, payload);
+  } else {
+    await sendSmtpMail(smtp as SmtpMailConfig, payload);
+  }
+
+  return { mode: (microsoft ? "microsoft-graph" : "smtp") as MailMode, to };
 }

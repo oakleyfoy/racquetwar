@@ -145,6 +145,12 @@ export async function POST(request: Request) {
     } catch (error) {
       console.error("CTD application email dispatch failed", error);
     }
+  } else {
+    // Previously silent, which made a missing variable indistinguishable from a
+    // rejected credential when an application arrived with no notification.
+    console.error(
+      "CTD application email skipped: no mail transport is configured.",
+    );
   }
 
   // Only a total failure is reported to the applicant; one surviving path is enough.
