@@ -31,9 +31,20 @@ type MailPayload = {
 
 export type MailMode = "microsoft-graph" | "smtp" | "skipped";
 
+/**
+ * Values pasted into a hosting dashboard routinely pick up stray whitespace,
+ * and none of these settings can legitimately contain any. A leading newline on
+ * MAIL_FROM_EMAIL is enough to make Graph address a mailbox that does not
+ * exist, so trim before use rather than trusting the environment.
+ */
+function env(name: string) {
+  const value = process.env[name]?.trim();
+  return value ? value : undefined;
+}
+
 function getSharedMailboxSettings() {
-  const from = process.env.MAIL_FROM_EMAIL ?? process.env.FORM_FROM_EMAIL;
-  const to = process.env.CTD_TO_EMAIL ?? process.env.INQUIRY_TO_EMAIL;
+  const from = env("MAIL_FROM_EMAIL") ?? env("FORM_FROM_EMAIL");
+  const to = env("CTD_TO_EMAIL") ?? env("INQUIRY_TO_EMAIL");
 
   if (!from || !to) return null;
 
@@ -42,9 +53,9 @@ function getSharedMailboxSettings() {
 
 function getMicrosoftMailConfig(): MicrosoftMailConfig | null {
   const shared = getSharedMailboxSettings();
-  const clientId = process.env.MICROSOFT_CLIENT_ID;
-  const clientSecret = process.env.MICROSOFT_CLIENT_SECRET;
-  const tenantId = process.env.MICROSOFT_TENANT_ID;
+  const clientId = env("MICROSOFT_CLIENT_ID");
+  const clientSecret = env("MICROSOFT_CLIENT_SECRET");
+  const tenantId = env("MICROSOFT_TENANT_ID");
 
   if (!shared || !clientId || !clientSecret || !tenantId) return null;
 
@@ -53,16 +64,16 @@ function getMicrosoftMailConfig(): MicrosoftMailConfig | null {
 
 function getSmtpMailConfig(): SmtpMailConfig | null {
   const shared = getSharedMailboxSettings();
-  const host = process.env.SMTP_HOST;
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
+  const host = env("SMTP_HOST");
+  const user = env("SMTP_USER");
+  const pass = env("SMTP_PASS");
 
   if (!shared || !host || !user || !pass) return null;
 
   return {
     host,
-    port: Number(process.env.SMTP_PORT ?? "587"),
-    secure: process.env.SMTP_SECURE === "true",
+    port: Number(env("SMTP_PORT") ?? "587"),
+    secure: env("SMTP_SECURE") === "true",
     user,
     pass,
     from: shared.from,
@@ -360,10 +371,29 @@ export function describeMailConfig() {
 
   const isSet = (name: string) => Boolean(process.env[name]?.trim());
 
+  const names = [
+    "MAIL_FROM_EMAIL",
+    "CTD_TO_EMAIL",
+    "MICROSOFT_TENANT_ID",
+    "MICROSOFT_CLIENT_ID",
+    "MICROSOFT_CLIENT_SECRET",
+    "SMTP_HOST",
+    "SMTP_USER",
+    "SMTP_PASS",
+  ];
+
+  // Trimmed automatically before use, but still worth reporting: it means the
+  // value in the dashboard is not what whoever set it intended.
+  const paddedWithWhitespace = names.filter((name) => {
+    const raw = process.env[name];
+    return Boolean(raw) && raw !== raw?.trim();
+  });
+
   return {
     transport: microsoft ? "microsoft-graph" : smtp ? "smtp" : "none",
     sendsAs: shared?.from ?? null,
     notifies: shared?.to ?? null,
+    paddedWithWhitespace,
     variables: {
       MAIL_FROM_EMAIL: isSet("MAIL_FROM_EMAIL"),
       CTD_TO_EMAIL: isSet("CTD_TO_EMAIL"),
