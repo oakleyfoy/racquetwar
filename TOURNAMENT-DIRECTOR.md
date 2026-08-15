@@ -7,6 +7,8 @@ password-protected review area at `/tournament-director/admin`.
 
 | Route | Purpose |
 | --- | --- |
+| `/` | Redirects to the program information page |
+| `/tournament-director-program` | Public program information page |
 | `/tournament-director` | Public application form |
 | `/tournament-director/api/submit` | Form submission endpoint |
 | `/tournament-director/admin` | Application list, filters, CSV export |

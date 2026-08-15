@@ -1,11 +1,10 @@
 import { redirect } from "next/navigation";
 
 /**
- * This deployment exists only to serve the Certified Tournament Director
- * application, so the root sends visitors straight to it. The redirect is
- * temporary rather than permanent because racquetwar.com is expected to move
- * here in full later, at which point the root becomes a real home page.
+ * Public visitors land on the program information page first. From there they
+ * can start the application. The redirect is temporary rather than permanent
+ * because racquetwar.com is expected to move here in full later.
  */
 export default function RootPage() {
-  redirect("/tournament-director");
+  redirect("/tournament-director-program");
 }

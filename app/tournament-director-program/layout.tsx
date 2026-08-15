@@ -2,35 +2,31 @@ import type { Metadata } from "next";
 
 import { CtdSiteFooter } from "@/components/ctd/ctd-site-footer";
 import { CtdSiteHeader } from "@/components/ctd/ctd-site-header";
-import {
-  APP_URL,
-  APPLICATION_PATH,
-  APPLICATION_SEO,
-} from "@/lib/ctd/site";
+import { APP_URL, PROGRAM_PATH, PROGRAM_SEO } from "@/lib/ctd/site";
 
-import "./ctd.css";
+import "../tournament-director/ctd.css";
 
 export const metadata: Metadata = {
-  title: APPLICATION_SEO.title,
-  description: APPLICATION_SEO.description,
+  title: PROGRAM_SEO.title,
+  description: PROGRAM_SEO.description,
   alternates: {
-    canonical: `${APP_URL}${APPLICATION_PATH}`,
+    canonical: `${APP_URL}${PROGRAM_PATH}`,
   },
   openGraph: {
-    title: APPLICATION_SEO.title,
-    description: APPLICATION_SEO.description,
-    url: `${APP_URL}${APPLICATION_PATH}`,
+    title: PROGRAM_SEO.title,
+    description: PROGRAM_SEO.description,
+    url: `${APP_URL}${PROGRAM_PATH}`,
     siteName: "War Tournaments",
     type: "website",
   },
   twitter: {
     card: "summary",
-    title: APPLICATION_SEO.title,
-    description: APPLICATION_SEO.description,
+    title: PROGRAM_SEO.title,
+    description: PROGRAM_SEO.description,
   },
 };
 
-export default function TournamentDirectorLayout({
+export default function TournamentDirectorProgramLayout({
   children,
 }: {
   children: React.ReactNode;

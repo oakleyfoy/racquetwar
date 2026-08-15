@@ -1,8 +1,10 @@
 .next/
+tsconfig.tsbuildinfo
 node_modules/
 out/
 dist/
 coverage/
+.visual-review/
 *.log
 .DS_Store
 Thumbs.db

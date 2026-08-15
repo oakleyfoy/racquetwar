@@ -10,10 +10,10 @@ export const PROGRAM_SLUG = "certified-tournament-director";
 export const RECAPTCHA_ACTION = "ctd_application";
 
 export const PROGRAM_TITLE =
-  "Apply to Become a Founding Certified Tournament Director";
+  "Apply to Become an RW Certified Tournament Director";
 
 export const PROGRAM_SUBTITLE =
-  "Join a select group of leaders who will launch and grow Racquet War tournaments in exclusive territories across the country and world";
+  "War Tournaments LLC is selecting an initial national group of 5–8 candidates to develop and operate professionally supported Racquet War events in their local markets.";
 
 export const UNITED_STATES = "United States";
 
@@ -244,23 +244,28 @@ export const AGREEMENTS = [
   {
     name: "agreeNotGuaranteed",
     label:
-      "I understand this is an application to join the RW Certified Tournament Director Program and does not guarantee acceptance.",
+      "I understand this is an application to join the RW Certified Tournament Director Program and does not guarantee acceptance or certification.",
   },
   {
     name: "agreeSelectionBasis",
     label:
-      "I understand acceptance is based upon interviews, qualifications, and territory availability.",
+      "I understand that certification, events, compensation and territory are not guaranteed and require written approval from War Tournaments LLC.",
   },
   {
     name: "agreeAccurate",
-    label: "I certify the information provided is accurate.",
+    label:
+      "I certify that the information provided in this application is accurate.",
   },
 ] as const;
 
 export type AgreementName = (typeof AGREEMENTS)[number]["name"];
 
+/** Informational only. Not a checkbox and not a stored field. */
+export const AUTHORIZATION_NOTICE =
+  "Candidates may not announce, market, register players for, collect money for or operate a Racquet War event without written authorization from War Tournaments LLC.";
+
 export const SELECTION_NOTICE =
-  "I understand that Racquet War is selecting a limited number of Founding Certified Tournament Directors. Acceptance is competitive, and only candidates who demonstrate strong leadership, professionalism, and a commitment to delivering an exceptional player experience will be invited into the program.";
+  "War Tournaments LLC is selecting an initial national group of 5–8 candidates for the RW Certified Tournament Director Program. Acceptance is competitive. Only candidates who demonstrate strong leadership, professionalism, local-market potential and a commitment to delivering an exceptional player experience will be invited into the program.";
 
 export const APPLICATION_STATUSES = [
   "new",

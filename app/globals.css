@@ -4,6 +4,16 @@
  * so there is deliberately no global theme here to conflict with it.
  */
 
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
 html,
 body {
   margin: 0;

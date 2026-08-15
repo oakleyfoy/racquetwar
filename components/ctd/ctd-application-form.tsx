@@ -8,6 +8,7 @@ import {
   BUSINESS_EXPERIENCE_OPTIONS,
   COUNTRIES,
   EMPTY_TERRITORY,
+  AUTHORIZATION_NOTICE,
   HOW_HEARD_OPTIONS,
   RECAPTCHA_ACTION,
   SELECTION_NOTICE,
@@ -26,6 +27,7 @@ import {
   type Territory,
   type TerritoryScope,
 } from "@/lib/ctd/fields";
+import { GOOGLE_PRIVACY_URL, GOOGLE_TERMS_URL } from "@/lib/ctd/site";
 
 declare global {
   interface Window {
@@ -460,14 +462,13 @@ export function CtdApplicationForm({
           </div>
           <h2>Application received</h2>
           <p>
-            Thank you, {form.firstName}. Your application to become a Founding
-            Certified Tournament Director has been submitted and a confirmation
+            Thank you, {form.firstName}. Your application for the RW Certified
+            Tournament Director Program has been submitted and a confirmation
             email is on its way to {form.email}.
           </p>
           <p>
-            Our team reviews every application personally and will follow up
-            regarding next steps, including interviews and territory
-            availability.
+            War Tournaments LLC reviews every application personally and will
+            follow up with individuals who appear to be a strong potential fit.
           </p>
         </div>
       </div>
@@ -968,6 +969,9 @@ export function CtdApplicationForm({
 
           <Section number={10} title="Agreement">
             <div className="ctd-notice">{SELECTION_NOTICE}</div>
+            <p className="ctd-warning" role="note">
+              {AUTHORIZATION_NOTICE}
+            </p>
 
             <div className="ctd-choices">
               {AGREEMENTS.map((agreement) => (
@@ -1007,10 +1011,18 @@ export function CtdApplicationForm({
             </button>
             <p className="ctd-fineprint">
               Fields marked with an asterisk are required. Your information is
-              sent directly to the Racquet War team and is never sold or shared.
-              {recaptchaSiteKey
-                ? " This form is protected by reCAPTCHA, and the Google Privacy Policy and Terms of Service apply."
-                : null}
+              submitted directly to War Tournaments LLC and will be used to
+              evaluate your interest in the RW Certified Tournament Director
+              Program. Your information will not be sold. This form is protected
+              by reCAPTCHA, and the{" "}
+              <a href={GOOGLE_PRIVACY_URL} rel="noreferrer" target="_blank">
+                Google Privacy Policy
+              </a>{" "}
+              and{" "}
+              <a href={GOOGLE_TERMS_URL} rel="noreferrer" target="_blank">
+                Terms of Service
+              </a>{" "}
+              apply.
             </p>
           </div>
         </form>
