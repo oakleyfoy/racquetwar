@@ -130,7 +130,7 @@ function renderSectionsText(sections: ReportSection[]) {
     .join("\n\n");
 }
 
-function buildInternalHtml(application: CtdApplicationInput) {
+export function buildInternalHtml(application: CtdApplicationInput) {
   const sections = buildReport(application);
 
   return `
@@ -147,7 +147,7 @@ function buildInternalHtml(application: CtdApplicationInput) {
     </div>`;
 }
 
-function buildInternalText(application: CtdApplicationInput) {
+export function buildInternalText(application: CtdApplicationInput) {
   return [
     "New Certified Tournament Director application",
     "",
@@ -160,13 +160,13 @@ function buildInternalText(application: CtdApplicationInput) {
   ].join("\n");
 }
 
-function buildAutoReplyHtml(application: CtdApplicationInput) {
+export function buildAutoReplyHtml(application: CtdApplicationInput) {
   return `
     <div style="font-family:Arial,Helvetica,sans-serif;color:#10181a;line-height:1.7;max-width:640px;">
       <h2 style="margin:0 0 16px;color:#006d56;">We received your application</h2>
       <p style="margin:0 0 16px;">Hi ${escapeHtml(application.firstName)},</p>
       <p style="margin:0 0 16px;">
-        Thank you for applying to the {escapeHtml(PROGRAM_NAME)} operated by War Tournaments LLC.
+        Thank you for applying to the ${escapeHtml(PROGRAM_NAME)} operated by War Tournaments LLC.
         This is an automatic confirmation that your application has been received.
       </p>
       <div style="margin:20px 0;padding:16px;border:1px solid #dbe7e1;background:#f2f7f3;">
@@ -188,7 +188,7 @@ function buildAutoReplyHtml(application: CtdApplicationInput) {
     </div>`;
 }
 
-function buildAutoReplyText(application: CtdApplicationInput) {
+export function buildAutoReplyText(application: CtdApplicationInput) {
   return [
     `Hi ${application.firstName},`,
     "",
