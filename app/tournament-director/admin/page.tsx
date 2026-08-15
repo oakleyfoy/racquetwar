@@ -1,18 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import {
-  countByStatus,
-  listApplications,
-  type ApplicationFilters,
-} from "@/lib/ctd/applications";
 import { isDatabaseConfigured } from "@/lib/ctd/db";
-import {
-  APPLICATION_STATUSES,
-  STATUS_LABELS,
-  formatTerritory,
-} from "@/lib/ctd/fields";
+import { formatTerritory } from "@/lib/ctd/fields";
 import { formatSubmittedAt } from "@/lib/ctd/report";
+import {
+  getTrackerSummary,
+  listTrackerApplications,
+  listTrackerFilterOptions,
+  type TrackerFilters,
+} from "@/lib/ctd/workflow-db";
+import {
+  WORKFLOW_STATUS_LABELS,
+  WORKFLOW_STATUSES,
+} from "@/lib/ctd/workflow";
+import { formatInstantInTimeZone } from "@/lib/ctd/workflow-time";
 
 import { logoutAction } from "./actions";
 
@@ -20,26 +22,48 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Tournament Director applications | Racquet War",
+  title: "CTD recruiting tracker | Racquet War",
   robots: { index: false, follow: false },
 };
 
-function buildExportHref(filters: ApplicationFilters) {
+function buildFilterHref(filters: TrackerFilters) {
   const params = new URLSearchParams();
   if (filters.status) params.set("status", filters.status);
+  if (filters.state) params.set("state", filters.state);
+  if (filters.territory) params.set("territory", filters.territory);
+  if (filters.assignedTo) params.set("assignedTo", filters.assignedTo);
+  if (filters.followUpDue) params.set("followUpDue", filters.followUpDue);
+  if (filters.screeningDate) params.set("screeningDate", filters.screeningDate);
   if (filters.search) params.set("search", filters.search);
-
   const query = params.toString();
-  return `/tournament-director/api/admin/export${query ? `?${query}` : ""}`;
+  return `/tournament-director/admin${query ? `?${query}` : ""}`;
 }
 
 export default async function AdminApplicationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; search?: string; deleted?: string; error?: string }>;
+  searchParams: Promise<{
+    status?: string;
+    search?: string;
+    state?: string;
+    territory?: string;
+    assignedTo?: string;
+    followUpDue?: string;
+    screeningDate?: string;
+    deleted?: string;
+    error?: string;
+  }>;
 }) {
-  const { status = "", search = "", deleted, error } = await searchParams;
-  const filters: ApplicationFilters = { status, search };
+  const params = await searchParams;
+  const filters: TrackerFilters = {
+    status: params.status ?? "",
+    search: params.search ?? "",
+    state: params.state ?? "",
+    territory: params.territory ?? "",
+    assignedTo: params.assignedTo ?? "",
+    followUpDue: params.followUpDue ?? "",
+    screeningDate: params.screeningDate ?? "",
+  };
 
   if (!isDatabaseConfigured()) {
     return (
@@ -54,13 +78,15 @@ export default async function AdminApplicationsPage({
     );
   }
 
-  let applications;
-  let counts: Record<string, number> = {};
+  let rows;
+  let summary;
+  let options;
 
   try {
-    [applications, counts] = await Promise.all([
-      listApplications(filters),
-      countByStatus(),
+    [rows, summary, options] = await Promise.all([
+      listTrackerApplications(filters),
+      getTrackerSummary(),
+      listTrackerFilterOptions(),
     ]);
   } catch (error) {
     console.error("CTD admin list failed", error);
@@ -76,20 +102,43 @@ export default async function AdminApplicationsPage({
     );
   }
 
-  const total = Object.values(counts).reduce((sum, value) => sum + value, 0);
+  const counts = [
+    ["Total", summary.total, {}],
+    ["New", summary.new, { status: "new" }],
+    ["Needs Review", summary.needsReview, { status: "under_review" }],
+    ["Screening", summary.screening, {}],
+    ["Advanced", summary.advanced, { status: "advanced" }],
+    ["On Hold", summary.onHold, { status: "on_hold" }],
+    ["Selected", summary.selected, { status: "selected" }],
+    ["Declined/Withdrawn", summary.declinedWithdrawn, {}],
+    ["Follow-ups Due", summary.followUpsDue, { followUpDue: "any_open" }],
+  ] as const;
+
+  const hasFilters = Boolean(
+    filters.status ||
+      filters.search ||
+      filters.state ||
+      filters.territory ||
+      filters.assignedTo ||
+      filters.followUpDue ||
+      filters.screeningDate,
+  );
 
   return (
     <main className="ctd-main">
       <div className="ctd-card" style={{ marginTop: 24 }}>
         <div className="ctd-admin-head">
           <div>
-            <h1 className="ctd-section-title">Tournament Director applications</h1>
+            <h1 className="ctd-section-title">CTD recruiting tracker</h1>
             <p className="ctd-section-hint">
-              {total} total &middot; showing {applications.length}
+              {summary.total} applicants &middot; showing {rows.length}
             </p>
           </div>
           <div className="ctd-admin-actions">
-            <a className="ctd-addbutton" href={buildExportHref(filters)}>
+            <a
+              className="ctd-addbutton"
+              href="/tournament-director/api/admin/export"
+            >
               Export CSV
             </a>
             <form action={logoutAction}>
@@ -100,104 +149,263 @@ export default async function AdminApplicationsPage({
           </div>
         </div>
 
-        {deleted ? (
+        {params.deleted ? (
           <div className="ctd-saved" role="status">
             Application deleted.
           </div>
         ) : null}
 
-        {error === "notfound" ? (
+        {params.error === "notfound" ? (
           <div className="ctd-alert" role="alert">
             That application was not found. It may have been deleted already.
           </div>
         ) : null}
 
-        <div className="ctd-statusbar">
-          {APPLICATION_STATUSES.map((value) => (
-            <span key={value} className={`ctd-badge ctd-badge-${value}`}>
-              {STATUS_LABELS[value]}: {counts[value] ?? 0}
-            </span>
+        <div className="ctd-summarygrid">
+          {counts.map(([label, value, hrefFilters]) => (
+            <Link
+              key={label}
+              className="ctd-summarytile"
+              href={buildFilterHref(hrefFilters)}
+            >
+              <strong>{value}</strong>
+              <span>{label}</span>
+            </Link>
           ))}
         </div>
 
-        <form className="ctd-filters" method="get">
+        <form className="ctd-filters ctd-filters-grid" method="get">
           <input
             className="ctd-input"
             type="search"
             name="search"
-            placeholder="Search name, email, city or territory"
-            defaultValue={search}
+            placeholder="Search name, email, phone, city, state, ZIP, or territory"
+            defaultValue={filters.search}
           />
-          <select className="ctd-select" name="status" defaultValue={status}>
+          <select className="ctd-select" name="status" defaultValue={filters.status}>
             <option value="">All statuses</option>
-            {APPLICATION_STATUSES.map((value) => (
+            {WORKFLOW_STATUSES.map((value) => (
               <option key={value} value={value}>
-                {STATUS_LABELS[value]}
+                {WORKFLOW_STATUS_LABELS[value]}
               </option>
             ))}
           </select>
+          <select className="ctd-select" name="state" defaultValue={filters.state}>
+            <option value="">All states</option>
+            {options.states.map((state) => (
+              <option key={state} value={state}>
+                {state}
+              </option>
+            ))}
+          </select>
+          <select
+            className="ctd-select"
+            name="territory"
+            defaultValue={filters.territory}
+          >
+            <option value="">All territories</option>
+            {options.territories.map((territory) => (
+              <option key={territory.value} value={territory.value}>
+                {territory.label}
+              </option>
+            ))}
+          </select>
+          <select
+            className="ctd-select"
+            name="assignedTo"
+            defaultValue={filters.assignedTo}
+          >
+            <option value="">All assigned</option>
+            {options.assignees.map((person) => (
+              <option key={person} value={person}>
+                {person}
+              </option>
+            ))}
+          </select>
+          <select
+            className="ctd-select"
+            name="followUpDue"
+            defaultValue={filters.followUpDue}
+          >
+            <option value="">Follow-ups</option>
+            <option value="any_open">Open follow-ups</option>
+            <option value="overdue">Overdue</option>
+            <option value="today">Due today</option>
+          </select>
+          <input
+            className="ctd-input"
+            type="date"
+            name="screeningDate"
+            defaultValue={filters.screeningDate}
+            aria-label="Screening date"
+          />
           <button className="ctd-addbutton" type="submit">
             Filter
           </button>
-          {status || search ? (
+          {hasFilters ? (
             <Link className="ctd-linkbutton" href="/tournament-director/admin">
               Clear
             </Link>
           ) : null}
         </form>
 
-        {applications.length === 0 ? (
-          <p className="ctd-empty">
-            No applications match these filters yet.
-          </p>
+        {rows.length === 0 ? (
+          <p className="ctd-empty">No applications match these filters yet.</p>
         ) : (
-          <div className="ctd-tablewrap">
-            <table className="ctd-table">
-              <thead>
-                <tr>
-                  <th>Submitted</th>
-                  <th>Applicant</th>
-                  <th>Territory</th>
-                  <th>Time</th>
-                  <th>Status</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {applications.map((application) => (
-                  <tr key={application.id}>
-                    <td className="ctd-nowrap">
-                      {formatSubmittedAt(application.submittedAt)}
-                    </td>
-                    <td>
-                      <strong>
-                        {application.firstName} {application.lastName}
-                      </strong>
-                      <div className="ctd-subtle">{application.email}</div>
-                      <div className="ctd-subtle">{application.mobilePhone}</div>
-                    </td>
-                    <td>{formatTerritory(application.primaryTerritory) || "—"}</td>
-                    <td>{application.timeCommitment || "—"}</td>
-                    <td>
-                      <span className={`ctd-badge ctd-badge-${application.status}`}>
-                        {STATUS_LABELS[application.status]}
-                      </span>
-                    </td>
-                    <td className="ctd-nowrap">
-                      <Link
-                        className="ctd-tablelink"
-                        href={`/tournament-director/admin/${application.id}`}
-                      >
-                        Review
-                      </Link>
-                    </td>
+          <>
+            <div className="ctd-tablewrap ctd-desktop-table">
+              <table className="ctd-table">
+                <thead>
+                  <tr>
+                    <th>Applicant</th>
+                    <th>Territory</th>
+                    <th>Submitted</th>
+                    <th>Status</th>
+                    <th>Next action</th>
+                    <th>Follow-up</th>
+                    <th>Screening</th>
+                    <th />
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {rows.map((row) => (
+                    <TrackerTableRow key={row.application.id} row={row} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="ctd-trackercards">
+              {rows.map((row) => (
+                <TrackerCard key={row.application.id} row={row} />
+              ))}
+            </div>
+          </>
         )}
       </div>
     </main>
+  );
+}
+
+function TrackerTableRow({
+  row,
+}: {
+  row: Awaited<ReturnType<typeof listTrackerApplications>>[number];
+}) {
+  const { application, workflow } = row;
+
+  return (
+    <tr>
+      <td>
+        <strong>
+          {application.firstName} {application.lastName}
+        </strong>
+        <div className="ctd-subtle">{application.email}</div>
+        <div className="ctd-subtle">{application.mobilePhone}</div>
+      </td>
+      <td>{formatTerritory(application.primaryTerritory) || "—"}</td>
+      <td className="ctd-nowrap">{formatSubmittedAt(application.submittedAt)}</td>
+      <td>
+        <span className={`ctd-badge ctd-badge-${workflow.currentStatus}`}>
+          {WORKFLOW_STATUS_LABELS[workflow.currentStatus]}
+        </span>
+      </td>
+      <td>{workflow.nextAction || "—"}</td>
+      <td>
+        <FollowUpCell
+          iso={workflow.nextFollowUpAt}
+          overdue={row.hasOverdueFollowUp}
+          dueToday={row.hasDueTodayFollowUp}
+        />
+      </td>
+      <td>
+        {workflow.screeningScheduledAt
+          ? formatInstantInTimeZone(
+              workflow.screeningScheduledAt,
+              workflow.screeningTimezone || "America/Chicago",
+              { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" },
+            )
+          : "—"}
+      </td>
+      <td className="ctd-nowrap">
+        <Link
+          className="ctd-tablelink"
+          href={`/tournament-director/admin/${application.id}`}
+        >
+          Review
+        </Link>
+      </td>
+    </tr>
+  );
+}
+
+function TrackerCard({
+  row,
+}: {
+  row: Awaited<ReturnType<typeof listTrackerApplications>>[number];
+}) {
+  const { application, workflow } = row;
+
+  return (
+    <article className="ctd-trackercard">
+      <div className="ctd-admin-head" style={{ paddingTop: 0 }}>
+        <div>
+          <strong>
+            {application.firstName} {application.lastName}
+          </strong>
+          <div className="ctd-subtle">{application.email}</div>
+          <div className="ctd-subtle">{application.mobilePhone}</div>
+        </div>
+        <span className={`ctd-badge ctd-badge-${workflow.currentStatus}`}>
+          {WORKFLOW_STATUS_LABELS[workflow.currentStatus]}
+        </span>
+      </div>
+      <p className="ctd-subtle">
+        Territory: {formatTerritory(application.primaryTerritory) || "—"}
+      </p>
+      <p className="ctd-subtle">
+        Submitted: {formatSubmittedAt(application.submittedAt)}
+      </p>
+      <p className="ctd-subtle">Next action: {workflow.nextAction || "—"}</p>
+      <FollowUpCell
+        iso={workflow.nextFollowUpAt}
+        overdue={row.hasOverdueFollowUp}
+        dueToday={row.hasDueTodayFollowUp}
+      />
+      {workflow.screeningScheduledAt ? (
+        <p className="ctd-subtle">
+          Screening:{" "}
+          {formatInstantInTimeZone(
+            workflow.screeningScheduledAt,
+            workflow.screeningTimezone || "America/Chicago",
+            { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" },
+          )}
+        </p>
+      ) : null}
+      <Link
+        className="ctd-tablelink"
+        href={`/tournament-director/admin/${application.id}`}
+      >
+        Review complete application
+      </Link>
+    </article>
+  );
+}
+
+function FollowUpCell({
+  iso,
+  overdue,
+  dueToday,
+}: {
+  iso: string | null;
+  overdue: boolean;
+  dueToday: boolean;
+}) {
+  return (
+    <div>
+      <div>{iso ? formatSubmittedAt(iso) : "—"}</div>
+      {overdue ? <span className="ctd-flag ctd-flag-overdue">Overdue</span> : null}
+      {dueToday ? <span className="ctd-flag ctd-flag-today">Due today</span> : null}
+    </div>
   );
 }

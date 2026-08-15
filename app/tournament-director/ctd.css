@@ -812,10 +812,38 @@
   border-color: #b8d6cb;
 }
 
-.ctd-badge-declined {
+.ctd-badge-declined,
+.ctd-badge-withdrawn {
   background: #fdecea;
   color: #86201a;
   border-color: #f3c9c5;
+}
+
+.ctd-badge-under_review {
+  background: #fff4e2;
+  color: #8a5300;
+  border-color: #f5dcb4;
+}
+
+.ctd-badge-screening_invited,
+.ctd-badge-screening_scheduled,
+.ctd-badge-screening_completed {
+  background: #efe9fb;
+  color: #513a94;
+  border-color: #d9cdf3;
+}
+
+.ctd-badge-advanced,
+.ctd-badge-selected {
+  background: var(--ctd-brand-soft);
+  color: var(--ctd-brand-deep);
+  border-color: #b8d6cb;
+}
+
+.ctd-badge-on_hold {
+  background: #f3f0e6;
+  color: #6b5a1f;
+  border-color: #e0d7b4;
 }
 
 .ctd-filters {
@@ -1314,6 +1342,182 @@
 
 .ctd-pagefooter p:last-child {
   margin-bottom: 0;
+}
+
+.ctd-summarygrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  padding-bottom: 18px;
+}
+
+.ctd-summarytile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  border: 1px solid var(--ctd-line);
+  border-radius: var(--ctd-radius);
+  background: var(--ctd-surface-tint);
+  text-decoration: none;
+  color: inherit;
+}
+
+.ctd-summarytile strong {
+  font-size: 1.35rem;
+  color: var(--ctd-brand-deep);
+}
+
+.ctd-summarytile span {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ctd-ink-muted);
+}
+
+.ctd-filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  align-items: center;
+}
+
+.ctd-trackercards {
+  display: none;
+  gap: 12px;
+}
+
+.ctd-trackercard {
+  border: 1px solid var(--ctd-line);
+  border-radius: var(--ctd-radius);
+  padding: 16px;
+  background: var(--ctd-surface);
+}
+
+.ctd-flag {
+  display: inline-block;
+  margin: 4px 6px 0 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.ctd-flag-overdue {
+  background: #fdecea;
+  color: #86201a;
+}
+
+.ctd-flag-today {
+  background: #fff4e2;
+  color: #8a5300;
+}
+
+.ctd-workflow-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 18px;
+}
+
+.ctd-workflow-grid .ctd-addbutton,
+.ctd-workflow-grid .ctd-submit,
+.ctd-workflow-grid .ctd-deletebutton {
+  margin-top: 12px;
+}
+
+.ctd-callbox {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--ctd-line);
+  border-radius: var(--ctd-radius);
+  background: #fff;
+}
+
+.ctd-callbox p {
+  margin: 0 0 6px;
+}
+
+.ctd-buttonrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.ctd-buttonrow .ctd-addbutton,
+.ctd-buttonrow .ctd-submit,
+.ctd-internal-label + form .ctd-addbutton,
+.ctd-reviewpanel .ctd-addbutton,
+.ctd-reviewpanel .ctd-submit {
+  margin-top: 12px;
+}
+
+.ctd-internal-label {
+  display: inline-block;
+  margin: 0 0 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #fff4e2;
+  color: #8a5300;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.ctd-notelist,
+.ctd-followlist,
+.ctd-activitylist {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 0;
+}
+
+.ctd-notelist li,
+.ctd-followlist li,
+.ctd-activitylist li {
+  padding: 12px 0;
+  border-top: 1px solid var(--ctd-line);
+}
+
+.ctd-followlist li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.ctd-notebody {
+  margin: 6px 0 0;
+  white-space: pre-wrap;
+}
+
+.ctd-emailpreview {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--ctd-line);
+}
+
+.ctd-emailpreview h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
+.ctd-emailpreview pre {
+  white-space: pre-wrap;
+  background: #fff;
+  border: 1px solid var(--ctd-line);
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 800px) {
+  .ctd-desktop-table {
+    display: none;
+  }
+
+  .ctd-trackercards {
+    display: grid;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

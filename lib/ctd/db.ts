@@ -114,7 +114,73 @@ create index if not exists ctd_applications_status_idx
   on ctd_applications (status);
 create index if not exists ctd_applications_email_idx
   on ctd_applications (email);
-`;
+
+create table if not exists ctd_application_workflows (
+  application_id uuid primary key references ctd_applications(id) on delete cascade,
+  current_status text not null default 'new',
+  assigned_to text not null default '',
+  next_action text not null default '',
+  next_follow_up_at timestamptz,
+  screening_scheduled_at timestamptz,
+  screening_timezone text not null default '',
+  screening_method text not null default '',
+  screening_location_or_link text not null default '',
+  screening_outcome text not null default '',
+  screening_summary text not null default '',
+  recommended_next_step text not null default '',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists ctd_application_workflows_status_idx
+  on ctd_application_workflows (current_status);
+create index if not exists ctd_application_workflows_follow_up_idx
+  on ctd_application_workflows (next_follow_up_at);
+create index if not exists ctd_application_workflows_screening_idx
+  on ctd_application_workflows (screening_scheduled_at);
+
+create table if not exists ctd_application_notes (
+  id uuid primary key default gen_random_uuid(),
+  application_id uuid not null references ctd_applications(id) on delete cascade,
+  note text not null,
+  created_by text not null default '',
+  created_at timestamptz not null default now()
+);
+
+create index if not exists ctd_application_notes_application_idx
+  on ctd_application_notes (application_id, created_at desc);
+
+create table if not exists ctd_application_follow_ups (
+  id uuid primary key default gen_random_uuid(),
+  application_id uuid not null references ctd_applications(id) on delete cascade,
+  action_description text not null,
+  due_at timestamptz,
+  completed_at timestamptz,
+  assigned_to text not null default '',
+  created_by text not null default '',
+  created_at timestamptz not null default now()
+);
+
+create index if not exists ctd_application_follow_ups_application_idx
+  on ctd_application_follow_ups (application_id, created_at desc);
+create index if not exists ctd_application_follow_ups_due_idx
+  on ctd_application_follow_ups (due_at)
+  where completed_at is null;
+
+create table if not exists ctd_application_activities (
+  id uuid primary key default gen_random_uuid(),
+  application_id uuid not null references ctd_applications(id) on delete cascade,
+  activity_type text not null,
+  previous_value text,
+  new_value text,
+  description text not null default '',
+  created_by text not null default '',
+  created_at timestamptz not null default now()
+);
+
+create index if not exists ctd_application_activities_application_idx
+  on ctd_application_activities (application_id, created_at desc);
+`
 
 /**
  * Applies the schema on first use. Cached as a single promise so concurrent
@@ -141,6 +207,29 @@ export async function query<T extends Record<string, unknown>>(
 ) {
   await ensureSchema();
   return getPool().query<T>(text, params);
+}
+
+export async function withTransaction<T>(
+  work: (client: {
+    query: typeof query;
+  }) => Promise<T>,
+) {
+  await ensureSchema();
+  const client = await getPool().connect();
+
+  try {
+    await client.query("begin");
+    const result = await work({
+      query: (text, params = []) => client.query(text, params),
+    });
+    await client.query("commit");
+    return result;
+  } catch (error) {
+    await client.query("rollback");
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 export function isDatabaseConfigured() {

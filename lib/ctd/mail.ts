@@ -440,3 +440,43 @@ export async function sendTestEmail(recipient?: string) {
 
   return { mode: (microsoft ? "microsoft-graph" : "smtp") as MailMode, to };
 }
+
+/**
+ * Candidate-facing message using the existing Graph/SMTP transport.
+ * Reply-To is always the staff inbox (CTD_TO_EMAIL).
+ */
+export async function sendCandidateMessage(payload: {
+  to: string;
+  subject: string;
+  text: string;
+  html: string;
+}) {
+  const microsoft = getMicrosoftMailConfig();
+  const smtp = getSmtpMailConfig();
+  const transport = microsoft ?? smtp;
+
+  if (!transport) {
+    throw new Error(
+      "No mail transport is configured. Set the Microsoft Graph or SMTP variables.",
+    );
+  }
+
+  const message: MailPayload = {
+    to: payload.to,
+    replyTo: transport.to,
+    subject: payload.subject,
+    text: payload.text,
+    html: payload.html,
+  };
+
+  if (microsoft) {
+    await sendMicrosoftMail(microsoft, message);
+  } else {
+    await sendSmtpMail(smtp as SmtpMailConfig, message);
+  }
+
+  return {
+    mode: (microsoft ? "microsoft-graph" : "smtp") as MailMode,
+    replyTo: transport.to,
+  };
+}
