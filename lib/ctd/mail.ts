@@ -1,6 +1,7 @@
 import nodemailer from "nodemailer";
 
-import { PROGRAM_TITLE, formatTerritory, type CtdApplicationInput } from "./fields";
+import { formatTerritory, type CtdApplicationInput } from "./fields";
+import { CONTACT_EMAIL, PROGRAM_NAME } from "./site";
 import { applicantName, buildReport, type ReportSection } from "./report";
 
 type MicrosoftMailConfig = {
@@ -165,7 +166,7 @@ function buildAutoReplyHtml(application: CtdApplicationInput) {
       <h2 style="margin:0 0 16px;color:#006d56;">We received your application</h2>
       <p style="margin:0 0 16px;">Hi ${escapeHtml(application.firstName)},</p>
       <p style="margin:0 0 16px;">
-        Thank you for applying to become a Founding Certified Tournament Director with Racquet War.
+        Thank you for applying to the {escapeHtml(PROGRAM_NAME)} operated by War Tournaments LLC.
         This is an automatic confirmation that your application has been received.
       </p>
       <div style="margin:20px 0;padding:16px;border:1px solid #dbe7e1;background:#f2f7f3;">
@@ -175,14 +176,15 @@ function buildAutoReplyHtml(application: CtdApplicationInput) {
         <p style="margin:0;">Phone: ${escapeHtml(application.mobilePhone)}</p>
       </div>
       <p style="margin:0 0 16px;">
-        Racquet War is selecting a limited number of Founding Certified Tournament Directors, and
-        acceptance is competitive. Our team will review your application and follow up regarding
-        next steps, including interviews and territory availability.
+        War Tournaments LLC is selecting an initial national group of 5–8 candidates, and
+        acceptance is competitive. Oakley Foy reviews applications personally and contacts
+        individuals who appear to be a strong potential fit.
       </p>
       <p style="margin:0 0 16px;">
-        If you need to add anything, simply reply to this email and it will reach our team directly.
+        If you have questions or need to add anything, reply to this email or write
+        ${escapeHtml(CONTACT_EMAIL)}. Your reply will reach Oakley Foy.
       </p>
-      <p style="margin:24px 0 0;font-weight:700;color:#006d56;">Racquet War</p>
+      <p style="margin:24px 0 0;font-weight:700;color:#006d56;">War Tournaments LLC | Racquet War</p>
     </div>`;
 }
 
@@ -190,20 +192,21 @@ function buildAutoReplyText(application: CtdApplicationInput) {
   return [
     `Hi ${application.firstName},`,
     "",
-    "Thank you for applying to become a Founding Certified Tournament Director with Racquet War.",
+    `Thank you for applying to the ${PROGRAM_NAME} operated by War Tournaments LLC.`,
     "This is an automatic confirmation that your application has been received.",
     "",
     `Territory of interest: ${formatTerritory(application.primaryTerritory)}`,
     `Email: ${application.email}`,
     `Phone: ${application.mobilePhone}`,
     "",
-    "Racquet War is selecting a limited number of Founding Certified Tournament Directors, and",
-    "acceptance is competitive. Our team will review your application and follow up regarding",
-    "next steps, including interviews and territory availability.",
+    "War Tournaments LLC is selecting an initial national group of 5–8 candidates, and",
+    "acceptance is competitive. Oakley Foy reviews applications personally and contacts",
+    "individuals who appear to be a strong potential fit.",
     "",
-    "If you need to add anything, simply reply to this email and it will reach our team directly.",
+    `If you have questions or need to add anything, reply to this email or write ${CONTACT_EMAIL}.`,
+    "Your reply will reach Oakley Foy.",
     "",
-    "Racquet War",
+    "War Tournaments LLC | Racquet War",
   ].join("\n");
 }
 
@@ -340,7 +343,7 @@ export async function dispatchApplicationEmails(
     await send({
       to: application.email,
       replyTo: transport.to,
-      subject: `We received your ${PROGRAM_TITLE.replace("Apply to Become a ", "")} application`,
+      subject: `We received your ${PROGRAM_NAME} application`,
       text: buildAutoReplyText(application),
       html: buildAutoReplyHtml(application),
     });

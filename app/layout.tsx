@@ -3,9 +3,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Racquet War",
+  title: "RW Certified Tournament Director Program | War Tournaments",
   description:
-    "Apply to become a Founding Certified Tournament Director with Racquet War.",
+    "Apply for consideration for the RW Certified Tournament Director Program operated by War Tournaments LLC.",
 };
 
 export default function RootLayout({
