@@ -445,11 +445,16 @@ export async function sendTestEmail(recipient?: string) {
  * Candidate-facing message using the existing Graph/SMTP transport.
  * Reply-To is always the staff inbox (CTD_TO_EMAIL).
  */
+export function getStaffNotifyAddress() {
+  return getSharedMailboxSettings()?.to ?? null;
+}
+
 export async function sendCandidateMessage(payload: {
   to: string;
   subject: string;
   text: string;
   html: string;
+  replyTo?: string;
 }) {
   const microsoft = getMicrosoftMailConfig();
   const smtp = getSmtpMailConfig();
@@ -468,6 +473,9 @@ export async function sendCandidateMessage(payload: {
     text: payload.text,
     html: payload.html,
   };
+  if (payload.replyTo) {
+    message.replyTo = payload.replyTo;
+  }
 
   if (microsoft) {
     await sendMicrosoftMail(microsoft, message);

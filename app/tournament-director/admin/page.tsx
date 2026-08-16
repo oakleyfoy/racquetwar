@@ -16,6 +16,9 @@ import {
 } from "@/lib/ctd/workflow";
 import { formatInstantInTimeZone } from "@/lib/ctd/workflow-time";
 
+import { AdminPortalNav } from "@/components/ctd/admin-portal-nav";
+import { getPortalDashboardCounts } from "@/lib/ctd/portal-db";
+
 import { logoutAction } from "./actions";
 
 export const runtime = "nodejs";
@@ -81,6 +84,14 @@ export default async function AdminApplicationsPage({
   let rows;
   let summary;
   let options;
+  let portalCounts = {
+    eventsAwaitingReview: 0,
+    eventsNeedsInformation: 0,
+    eventsAuthorized: 0,
+    sponsorshipsAwaitingReview: 0,
+    sponsorshipsNeedsInformation: 0,
+    sponsorshipsApproved: 0,
+  };
 
   try {
     [rows, summary, options] = await Promise.all([
@@ -100,6 +111,12 @@ export default async function AdminApplicationsPage({
         </div>
       </main>
     );
+  }
+
+  try {
+    portalCounts = await getPortalDashboardCounts();
+  } catch (error) {
+    console.error("CTD portal dashboard counts failed", error);
   }
 
   const counts = [
@@ -127,6 +144,7 @@ export default async function AdminApplicationsPage({
   return (
     <main className="ctd-main">
       <div className="ctd-card" style={{ marginTop: 24 }}>
+        <AdminPortalNav />
         <div className="ctd-admin-head">
           <div>
             <h1 className="ctd-section-title">CTD recruiting tracker</h1>
@@ -160,6 +178,33 @@ export default async function AdminApplicationsPage({
             That application was not found. It may have been deleted already.
           </div>
         ) : null}
+
+        <div className="ctd-summarygrid">
+          <Link className="ctd-summarytile" href="/tournament-director/admin/events?status=submitted">
+            <strong>{portalCounts.eventsAwaitingReview}</strong>
+            <span>Event proposals awaiting review</span>
+          </Link>
+          <Link className="ctd-summarytile" href="/tournament-director/admin/events?status=needs_information">
+            <strong>{portalCounts.eventsNeedsInformation}</strong>
+            <span>Event proposals needing information</span>
+          </Link>
+          <Link className="ctd-summarytile" href="/tournament-director/admin/events?status=authorized">
+            <strong>{portalCounts.eventsAuthorized}</strong>
+            <span>Authorized upcoming events</span>
+          </Link>
+          <Link className="ctd-summarytile" href="/tournament-director/admin/sponsorships?status=submitted">
+            <strong>{portalCounts.sponsorshipsAwaitingReview}</strong>
+            <span>Sponsorships awaiting review</span>
+          </Link>
+          <Link className="ctd-summarytile" href="/tournament-director/admin/sponsorships?status=needs_information">
+            <strong>{portalCounts.sponsorshipsNeedsInformation}</strong>
+            <span>Sponsorships needing information</span>
+          </Link>
+          <Link className="ctd-summarytile" href="/tournament-director/admin/sponsorships?status=approved">
+            <strong>{portalCounts.sponsorshipsApproved}</strong>
+            <span>Approved active sponsorships</span>
+          </Link>
+        </div>
 
         <div className="ctd-summarygrid">
           {counts.map(([label, value, hrefFilters]) => (

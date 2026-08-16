@@ -1,5 +1,7 @@
 import { Pool } from "pg";
 
+import { PORTAL_SCHEMA_SQL } from "./portal-schema";
+
 /**
  * Next.js reloads modules in development and can run multiple server instances,
  * so the pool and the schema bootstrap are cached on globalThis to avoid opening
@@ -189,7 +191,7 @@ create index if not exists ctd_application_activities_application_idx
 export function ensureSchema() {
   if (!globalForDb.ctdSchemaReady) {
     globalForDb.ctdSchemaReady = getPool()
-      .query(SCHEMA_SQL)
+      .query(`${SCHEMA_SQL}\n${PORTAL_SCHEMA_SQL}`)
       .then(() => undefined)
       .catch((error) => {
         // Clear the cache so a transient failure does not poison every later request.

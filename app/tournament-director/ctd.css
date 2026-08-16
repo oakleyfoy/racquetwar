@@ -1510,6 +1510,119 @@
   font-size: 0.85rem;
 }
 
+.ctd-fieldset {
+  border: 1px solid var(--ctd-line);
+  border-radius: var(--ctd-radius);
+  padding: 18px 16px 8px;
+  margin: 0 0 22px;
+  background: #fff;
+}
+
+.ctd-fieldset legend {
+  padding: 0 6px;
+}
+
+.ctd-check {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 0 0 12px;
+  font-size: 0.95rem;
+}
+
+.ctd-check input {
+  margin-top: 4px;
+}
+
+.ctd-notice {
+  margin: 8px 0 16px;
+  padding: 12px 14px;
+  border-left: 4px solid var(--ctd-accent);
+  background: var(--ctd-surface-tint);
+  color: var(--ctd-ink-muted);
+}
+
+.ctd-totals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px 18px;
+  margin: 16px 0;
+}
+
+.ctd-totals div {
+  padding: 10px 12px;
+  border: 1px solid var(--ctd-line);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.ctd-totals dt {
+  font-size: 0.78rem;
+  color: var(--ctd-ink-muted);
+}
+
+.ctd-totals dd {
+  margin: 4px 0 0;
+  font-weight: 700;
+}
+
+.ctd-budgetlist,
+.ctd-budgetcard {
+  display: grid;
+  gap: 14px;
+}
+
+.ctd-budgetcard {
+  padding: 14px;
+  border: 1px solid var(--ctd-line);
+  border-radius: var(--ctd-radius);
+  background: var(--ctd-surface-tint);
+}
+
+.ctd-badge-draft,
+.ctd-badge-submitted,
+.ctd-badge-needs_information,
+.ctd-badge-under_review,
+.ctd-badge-approved_authorization_pending,
+.ctd-badge-authorized,
+.ctd-badge-approved,
+.ctd-badge-approved_with_conditions,
+.ctd-badge-declined,
+.ctd-badge-withdrawn,
+.ctd-badge-cancelled,
+.ctd-badge-expired {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: var(--ctd-brand-soft);
+  color: var(--ctd-brand-deep);
+}
+
+.ctd-badge-authorized,
+.ctd-badge-approved {
+  background: #e7f4c8;
+  color: #3b4d00;
+}
+
+.ctd-badge-declined,
+.ctd-badge-cancelled,
+.ctd-badge-expired {
+  background: #fdecea;
+  color: #86201a;
+}
+
+@media print {
+  .ctd-topbar,
+  .ctd-pagefooter,
+  .ctd-submit,
+  .ctd-addbutton,
+  .ctd-linkbutton {
+    display: none !important;
+  }
+}
+
 @media (max-width: 800px) {
   .ctd-desktop-table {
     display: none;

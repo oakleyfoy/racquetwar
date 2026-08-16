@@ -30,6 +30,12 @@ import {
   splitDateAndTimeForInput,
 } from "@/lib/ctd/workflow-time";
 
+import { getDirectorByApplicationId } from "@/lib/ctd/director-db";
+
+import {
+  activateDirectorAction,
+  sendDirectorLoginAction,
+} from "../portal-actions";
 import {
   addFollowUpAction,
   addNoteAction,
@@ -78,6 +84,10 @@ const NOTICES: Record<string, string> = {
   declined: "Candidate declined. No email was sent.",
   selected:
     "Candidate marked Selected (internal status only). No email was sent.",
+  director_activated: "Director portal access is active for this selected applicant.",
+  director_link_sent: "Director sign-in link sent.",
+  director_inactive: "Director access is not active.",
+  director_deactivated: "Director access deactivated.",
   confirm_required: "That action needs confirmation before it can run.",
   reason_required: "Enter the required reason before continuing.",
   hold_date_required: "A follow-up date is required to put a candidate on hold.",
@@ -105,6 +115,7 @@ export default async function AdminApplicationDetailPage({
   if (!workspace) notFound();
 
   const { application, workflow, notes, followUps, activities } = workspace;
+  const directorRecord = await getDirectorByApplicationId(application.id);
   const sections = buildReport(application);
   const flash = notice ? NOTICES[notice] : saved ? "Changes saved." : null;
   const isError = Boolean(
@@ -367,6 +378,38 @@ export default async function AdminApplicationDetailPage({
                 Mark selected
               </button>
             </AdminConfirmForm>
+            {workflow.currentStatus === "selected" ? (
+              <div className="ctd-callbox">
+                <h3 className="ctd-report-title">Director portal access</h3>
+                <p className="ctd-subtle">
+                  Access is created only from Selected applications and uses a
+                  one-time email link. There is no shared Director password.
+                </p>
+                {directorRecord ? (
+                  <>
+                    <p className="ctd-subtle">
+                      Status: {directorRecord.status} · {directorRecord.email}
+                    </p>
+                    {directorRecord.status === "active" ? (
+                      <form action={sendDirectorLoginAction}>
+                        <input type="hidden" name="directorId" value={directorRecord.id} />
+                        <input type="hidden" name="applicationId" value={application.id} />
+                        <button className="ctd-addbutton" type="submit">
+                          Send portal sign-in link
+                        </button>
+                      </form>
+                    ) : null}
+                  </>
+                ) : (
+                  <form action={activateDirectorAction}>
+                    <input type="hidden" name="applicationId" value={application.id} />
+                    <button className="ctd-submit" type="submit">
+                      Activate Director access
+                    </button>
+                  </form>
+                )}
+              </div>
+            ) : null}
           </div>
         </section>
 

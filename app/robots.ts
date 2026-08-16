@@ -23,7 +23,11 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/tournament-director/admin", "/tournament-director/api/"],
+        disallow: [
+          "/tournament-director/admin",
+          "/tournament-director/portal",
+          "/tournament-director/api/",
+        ],
       },
     ],
   };
