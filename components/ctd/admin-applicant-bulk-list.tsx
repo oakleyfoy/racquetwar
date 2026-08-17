@@ -225,7 +225,7 @@ export function AdminApplicantBulkList({
               <th>Next action</th>
               <th>Follow-up</th>
               <th>Screening</th>
-              <th />
+              <th className="ctd-reviewcol">Review</th>
             </tr>
           </thead>
           <tbody>
@@ -240,7 +240,12 @@ export function AdminApplicantBulkList({
                   />
                 </td>
                 <td>
-                  <strong>{row.name}</strong>
+                  <Link
+                    className="ctd-tablelink"
+                    href={`/tournament-director/admin/${row.id}`}
+                  >
+                    <strong>{row.name}</strong>
+                  </Link>
                   <div className="ctd-subtle">{row.email}</div>
                   <div className="ctd-subtle">{row.phone}</div>
                 </td>
@@ -258,7 +263,7 @@ export function AdminApplicantBulkList({
                 <td>
                   <ScreeningCell row={row} />
                 </td>
-                <td className="ctd-nowrap">
+                <td className="ctd-nowrap ctd-reviewcol">
                   <Link
                     className="ctd-tablelink"
                     href={`/tournament-director/admin/${row.id}`}
@@ -276,7 +281,7 @@ export function AdminApplicantBulkList({
         {rows.map((row) => (
           <article className="ctd-trackercard" key={row.id}>
             <div className="ctd-admin-head" style={{ paddingTop: 0 }}>
-              <label className="ctd-cardselect">
+              <div className="ctd-cardselect">
                 <input
                   type="checkbox"
                   checked={selected.has(row.id)}
@@ -284,11 +289,16 @@ export function AdminApplicantBulkList({
                   aria-label={`Select ${row.name}`}
                 />
                 <span>
-                  <strong>{row.name}</strong>
+                  <Link
+                    className="ctd-tablelink"
+                    href={`/tournament-director/admin/${row.id}`}
+                  >
+                    <strong>{row.name}</strong>
+                  </Link>
                   <div className="ctd-subtle">{row.email}</div>
                   <div className="ctd-subtle">{row.phone}</div>
                 </span>
-              </label>
+              </div>
               <span className={`ctd-badge ctd-badge-${row.status}`}>
                 {row.statusLabel}
               </span>
