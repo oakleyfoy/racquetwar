@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  canReceiveScreeningInvitation,
   defaultWorkflowStatus,
+  hasUsableApplicantEmail,
   requiresStatusConfirmation,
+  SCREENING_INVITATION_ELIGIBLE_STATUSES,
   summarizeWorkflowStatuses,
   WORKFLOW_STATUS_LABELS,
   WORKFLOW_STATUSES,
@@ -42,6 +45,29 @@ describe("workflow statuses", () => {
     expect(requiresStatusConfirmation("advanced", "on_hold")).toBe(true);
     expect(requiresStatusConfirmation("withdrawn", "under_review")).toBe(true);
     expect(requiresStatusConfirmation("declined", "declined")).toBe(false);
+  });
+
+  it("limits screening invitations to New, Under Review, and Screening Invited", () => {
+    expect([...SCREENING_INVITATION_ELIGIBLE_STATUSES]).toEqual([
+      "new",
+      "under_review",
+      "screening_invited",
+    ]);
+    expect(canReceiveScreeningInvitation("new")).toBe(true);
+    expect(canReceiveScreeningInvitation("under_review")).toBe(true);
+    expect(canReceiveScreeningInvitation("screening_invited")).toBe(true);
+    expect(canReceiveScreeningInvitation("screening_scheduled")).toBe(false);
+    expect(canReceiveScreeningInvitation("selected")).toBe(false);
+    expect(canReceiveScreeningInvitation("declined")).toBe(false);
+    expect(canReceiveScreeningInvitation("withdrawn")).toBe(false);
+  });
+
+  it("rejects missing or invalid applicant emails", () => {
+    expect(hasUsableApplicantEmail("carla@example.com")).toBe(true);
+    expect(hasUsableApplicantEmail("  carla@example.com  ")).toBe(true);
+    expect(hasUsableApplicantEmail("")).toBe(false);
+    expect(hasUsableApplicantEmail("not-an-email")).toBe(false);
+    expect(hasUsableApplicantEmail(null)).toBe(false);
   });
 
   it("summarizes tracker counts from workflow statuses", () => {

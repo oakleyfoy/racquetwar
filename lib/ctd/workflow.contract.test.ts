@@ -50,6 +50,14 @@ const INVITATION_SOURCE = readFileSync(
   "utf8",
 );
 const MAIL_SOURCE = readFileSync(resolve(process.cwd(), "lib/ctd/mail.ts"), "utf8");
+const BULK_SOURCE = readFileSync(
+  resolve(process.cwd(), "lib/ctd/bulk-screening-invitations.ts"),
+  "utf8",
+);
+const BULK_UI_SOURCE = readFileSync(
+  resolve(process.cwd(), "components/ctd/admin-applicant-bulk-list.tsx"),
+  "utf8",
+);
 
 describe("workflow schema and isolation", () => {
   it("adds companion tables without destructively changing ctd_applications", () => {
@@ -127,6 +135,9 @@ describe("workflow schema and isolation", () => {
     expect(PROXY_SOURCE).toContain('"/tournament-director/api/admin/:path*"');
     expect(ACTIONS_SOURCE).toContain("requireAdminSession");
     expect(ACTIONS_SOURCE).toContain("requireWorkspaceApplication");
+    expect(ACTIONS_SOURCE).toContain("export async function sendBulkScreeningInvitationsAction");
+    expect(ACTIONS_SOURCE).toContain("runAuthorizedBulkScreeningInvitations");
+    expect(ACTIONS_SOURCE).toContain("deliverScreeningInvitation");
     expect(ACTIONS_SOURCE.match(/requireAdminSession|requireWorkspaceApplication/g)?.length).toBeGreaterThan(8);
     expect(ACTIONS_SOURCE).toContain("wantsEmail");
     const statusAction = ACTIONS_SOURCE.slice(
@@ -142,6 +153,15 @@ describe("workflow schema and isolation", () => {
     expect(MAIL_SOURCE).toContain("export async function sendCandidateMessage");
     expect(MAIL_SOURCE).toContain("replyTo: transport.to");
     expect(MAIL_SOURCE).toContain("const transport = microsoft ?? smtp");
+  });
+
+  it("reuses the individual screening invitation path for bulk sends", () => {
+    expect(BULK_SOURCE).toContain("deliverScreeningInvitation");
+    expect(BULK_SOURCE).toContain("requireStoredApplication");
+    expect(BULK_SOURCE).not.toMatch(/war.?campaign/i);
+    expect(INVITATION_SOURCE).not.toMatch(/war.?campaign/i);
+    expect(BULK_UI_SOURCE).toContain("selectedRows.map((row) => row.id)");
+    expect(ACTIONS_SOURCE).toContain("export async function sendScreeningInvitationAction");
   });
 });
 

@@ -123,6 +123,44 @@ describe("Microsoft Bookings screening invitation", () => {
     });
   });
 
+  it("keeps the individual later-status transition when not a Screening Invited resend", async () => {
+    const markInvited = vi.fn();
+    const sendMessage = vi.fn().mockResolvedValue({ mode: "smtp", replyTo: "staff@example.com" });
+    const recordActivity = vi.fn();
+
+    const result = await deliverScreeningInvitation(application, "screening_scheduled", {
+      getBookingUrl: () => BOOKING_URL,
+      sendMessage,
+      markInvited,
+      recordActivity,
+    });
+
+    expect(result).toEqual({ ok: true, statusChanged: true });
+    expect(markInvited).toHaveBeenCalledWith(application.id, "screening_scheduled");
+  });
+
+  it("resends to Screening Invited without changing status", async () => {
+    const markInvited = vi.fn();
+    const sendMessage = vi.fn().mockResolvedValue({ mode: "smtp", replyTo: "staff@example.com" });
+    const recordActivity = vi.fn();
+
+    const result = await deliverScreeningInvitation(application, "screening_invited", {
+      getBookingUrl: () => BOOKING_URL,
+      sendMessage,
+      markInvited,
+      recordActivity,
+    });
+
+    expect(result).toEqual({ ok: true, statusChanged: false });
+    expect(sendMessage).toHaveBeenCalledTimes(1);
+    expect(markInvited).not.toHaveBeenCalled();
+    expect(recordActivity).toHaveBeenCalledWith(application.id, {
+      sent: true,
+      emailType: "screening_invitation",
+      detail: "Resent Microsoft Bookings screening invitation.",
+    });
+  });
+
   it("reads only a safe server-side booking URL", () => {
     vi.stubEnv("CTD_SCREENING_BOOKING_URL", BOOKING_URL);
     expect(getScreeningBookingUrl()).toBe(BOOKING_URL);

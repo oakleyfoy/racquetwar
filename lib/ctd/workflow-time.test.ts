@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { followUpUrgency, formatInstantInTimeZone, zonedDateTimeToUtc } from "./workflow-time";
+import {
+  followUpUrgency,
+  formatInstantInTimeZone,
+  formatScreeningInvitationStamp,
+  zonedDateTimeToUtc,
+} from "./workflow-time";
 
 describe("screening time conversion", () => {
   it("converts candidate-local time to UTC and back through America/Chicago", () => {
@@ -47,5 +52,15 @@ describe("screening time conversion", () => {
         "America/Chicago",
       ),
     ).toEqual({ overdue: false, dueToday: false, completed: true });
+  });
+
+  it("labels first invitations and later resends from existing activity history", () => {
+    expect(formatScreeningInvitationStamp("2026-08-17T18:00:00.000Z", 1)).toBe(
+      "Invited Aug 17",
+    );
+    expect(formatScreeningInvitationStamp("2026-08-18T18:00:00.000Z", 2)).toBe(
+      "Resent Aug 18",
+    );
+    expect(formatScreeningInvitationStamp(null, 0)).toBeNull();
   });
 });

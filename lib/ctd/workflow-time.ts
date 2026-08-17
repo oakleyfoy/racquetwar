@@ -84,6 +84,21 @@ export function formatInstantInTimeZone(
   return new Intl.DateTimeFormat("en-US", { timeZone, ...options }).format(date);
 }
 
+export function formatScreeningInvitationStamp(
+  lastInvitationAt: string | null | undefined,
+  sendCount: number,
+) {
+  if (!lastInvitationAt) return null;
+
+  const date = formatInstantInTimeZone(lastInvitationAt, ADMIN_TIMEZONE, {
+    month: "short",
+    day: "numeric",
+  });
+  if (!date) return null;
+
+  return sendCount > 1 ? `Resent ${date}` : `Invited ${date}`;
+}
+
 export function calendarDateInTimeZone(
   value: string | Date,
   timeZone: string,

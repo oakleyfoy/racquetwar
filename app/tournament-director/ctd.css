@@ -555,6 +555,11 @@
   color: #ffffff;
 }
 
+.ctd-addbutton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* ---------- Agreement ---------- */
 
 .ctd-notice {
@@ -1394,6 +1399,79 @@
   background: var(--ctd-surface);
 }
 
+.ctd-selectcol {
+  width: 44px;
+  text-align: center;
+}
+
+.ctd-selectcol input,
+.ctd-cardselect input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--ctd-brand);
+}
+
+.ctd-cardselect {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.ctd-bulkbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  margin: 0 0 12px;
+  border: 1px solid var(--ctd-line);
+  border-radius: var(--ctd-radius);
+  background: var(--ctd-surface-tint);
+}
+
+.ctd-bulkbar .ctd-addbutton {
+  margin-top: 0;
+}
+
+.ctd-bulk-resultlist {
+  margin: 10px 0 0;
+  padding-left: 20px;
+}
+
+.ctd-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(20, 32, 28, 0.45);
+}
+
+.ctd-modal {
+  width: min(520px, 100%);
+  max-height: min(80vh, 640px);
+  overflow: auto;
+  padding: 24px;
+  border: 1px solid var(--ctd-line);
+  border-radius: var(--ctd-radius);
+  background: var(--ctd-surface);
+}
+
+.ctd-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.ctd-modal-actions .ctd-submit {
+  margin: 0;
+}
+
 .ctd-flag {
   display: inline-block;
   margin: 4px 6px 0 0;
@@ -1669,7 +1747,10 @@ a.ctd-submit {
   .ctd-pagefooter,
   .ctd-submit,
   .ctd-addbutton,
-  .ctd-linkbutton {
+  .ctd-linkbutton,
+  .ctd-bulkbar,
+  .ctd-selectcol,
+  .ctd-modal-backdrop {
     display: none !important;
   }
 }

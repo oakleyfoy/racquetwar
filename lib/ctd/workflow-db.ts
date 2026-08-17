@@ -88,6 +88,8 @@ export type TrackerRow = {
   workflow: WorkflowRecord;
   hasOverdueFollowUp: boolean;
   hasDueTodayFollowUp: boolean;
+  lastScreeningInvitationAt: string | null;
+  screeningInvitationSendCount: number;
 };
 
 type WorkflowRow = {
@@ -429,6 +431,8 @@ export async function listTrackerApplications(filters: TrackerFilters = {}) {
       primary_territory: CtdApplicationRecord["primaryTerritory"] | null;
       overdue_follow_up: boolean;
       due_today_follow_up: boolean;
+      last_invitation_at: Date | null;
+      invitation_send_count: number | string | null;
     }
   >(
     `select ${APPLICATION_SELECT},
@@ -448,7 +452,21 @@ export async function listTrackerApplications(filters: TrackerFilters = {}) {
                 and f.completed_at is null
                 and (f.due_at at time zone '${ADMIN_TIMEZONE}')::date
                   = (now() at time zone '${ADMIN_TIMEZONE}')::date
-            ) as due_today_follow_up
+            ) as due_today_follow_up,
+            (
+              select max(act.created_at)
+              from ctd_application_activities act
+              where act.application_id = a.id
+                and act.activity_type = 'candidate_email_sent'
+                and act.new_value = 'screening_invitation'
+            ) as last_invitation_at,
+            (
+              select count(*)::int
+              from ctd_application_activities act
+              where act.application_id = a.id
+                and act.activity_type = 'candidate_email_sent'
+                and act.new_value = 'screening_invitation'
+            ) as invitation_send_count
      from ctd_applications a
      left join ctd_application_workflows w on w.application_id = a.id
      where ${conditions.join(" and ")}
@@ -523,6 +541,8 @@ export async function listTrackerApplications(filters: TrackerFilters = {}) {
       workflow: mapWorkflow(row.application_id ? row : undefined, row.id),
       hasOverdueFollowUp: Boolean(row.overdue_follow_up),
       hasDueTodayFollowUp: Boolean(row.due_today_follow_up),
+      lastScreeningInvitationAt: iso(row.last_invitation_at),
+      screeningInvitationSendCount: Number(row.invitation_send_count ?? 0),
     } satisfies TrackerRow;
   });
 }

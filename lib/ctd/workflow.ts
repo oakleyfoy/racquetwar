@@ -54,6 +54,13 @@ export const SCREENING_STATUSES = [
 
 export const CLOSED_WORKFLOW_STATUSES = ["declined", "withdrawn"] as const;
 
+/** Statuses that may receive an initial or resent Screening Invitation. */
+export const SCREENING_INVITATION_ELIGIBLE_STATUSES = [
+  "new",
+  "under_review",
+  "screening_invited",
+] as const;
+
 export const SCREENING_METHODS = [
   "phone",
   "microsoft_teams",
@@ -250,4 +257,19 @@ export function isFollowUpDueFilter(
   value: string,
 ): value is FollowUpDueFilter {
   return value === "any_open" || value === "overdue" || value === "today";
+}
+
+export function canReceiveScreeningInvitation(status: string) {
+  return (SCREENING_INVITATION_ELIGIBLE_STATUSES as readonly string[]).includes(
+    status,
+  );
+}
+
+export function hasUsableApplicantEmail(email: string | null | undefined) {
+  const value = email?.trim() ?? "";
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+export function screeningInvitationIneligibilityLabel(status: WorkflowStatus) {
+  return `Status is ${WORKFLOW_STATUS_LABELS[status]} — not eligible for a screening invitation`;
 }

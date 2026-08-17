@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -19,6 +20,7 @@ import {
   type ScreeningEmailDetails,
 } from "@/lib/ctd/candidate-mail";
 import { sendCandidateMessage } from "@/lib/ctd/mail";
+import { runAuthorizedBulkScreeningInvitations } from "@/lib/ctd/bulk-screening-invitations";
 import { deliverScreeningInvitation } from "@/lib/ctd/screening-invitation";
 import {
   addFollowUp,
@@ -312,6 +314,17 @@ export async function sendScreeningInvitationAction(formData: FormData) {
         : "email_failed",
     ),
   );
+}
+
+export async function sendBulkScreeningInvitationsAction(
+  applicationIds: unknown,
+) {
+  const result = await runAuthorizedBulkScreeningInvitations(
+    applicationIds,
+    requireAdminSession,
+  );
+  revalidatePath(ADMIN_PATH);
+  return result;
 }
 
 export async function confirmBookingAction(formData: FormData) {

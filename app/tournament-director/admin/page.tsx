@@ -14,8 +14,12 @@ import {
   WORKFLOW_STATUS_LABELS,
   WORKFLOW_STATUSES,
 } from "@/lib/ctd/workflow";
-import { formatInstantInTimeZone } from "@/lib/ctd/workflow-time";
+import {
+  formatInstantInTimeZone,
+  formatScreeningInvitationStamp,
+} from "@/lib/ctd/workflow-time";
 
+import { AdminApplicantBulkList } from "@/components/ctd/admin-applicant-bulk-list";
 import { AdminPortalNav } from "@/components/ctd/admin-portal-nav";
 import { getPortalDashboardCounts } from "@/lib/ctd/portal-db";
 
@@ -297,160 +301,42 @@ export default async function AdminApplicationsPage({
         {rows.length === 0 ? (
           <p className="ctd-empty">No applications match these filters yet.</p>
         ) : (
-          <>
-            <div className="ctd-tablewrap ctd-desktop-table">
-              <table className="ctd-table">
-                <thead>
-                  <tr>
-                    <th>Applicant</th>
-                    <th>Territory</th>
-                    <th>Submitted</th>
-                    <th>Status</th>
-                    <th>Next action</th>
-                    <th>Follow-up</th>
-                    <th>Screening</th>
-                    <th />
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row) => (
-                    <TrackerTableRow key={row.application.id} row={row} />
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="ctd-trackercards">
-              {rows.map((row) => (
-                <TrackerCard key={row.application.id} row={row} />
-              ))}
-            </div>
-          </>
+          <AdminApplicantBulkList
+            rows={rows.map((row) => ({
+              id: row.application.id,
+              name: `${row.application.firstName} ${row.application.lastName}`.trim(),
+              email: row.application.email,
+              phone: row.application.mobilePhone,
+              territory: formatTerritory(row.application.primaryTerritory) || "—",
+              submittedLabel: formatSubmittedAt(row.application.submittedAt),
+              status: row.workflow.currentStatus,
+              statusLabel: WORKFLOW_STATUS_LABELS[row.workflow.currentStatus],
+              nextAction: row.workflow.nextAction || "—",
+              followUpLabel: row.workflow.nextFollowUpAt
+                ? formatSubmittedAt(row.workflow.nextFollowUpAt)
+                : "—",
+              overdue: row.hasOverdueFollowUp,
+              dueToday: row.hasDueTodayFollowUp,
+              screeningScheduledLabel: row.workflow.screeningScheduledAt
+                ? formatInstantInTimeZone(
+                    row.workflow.screeningScheduledAt,
+                    row.workflow.screeningTimezone || "America/Chicago",
+                    {
+                      month: "short",
+                      day: "numeric",
+                      hour: "numeric",
+                      minute: "2-digit",
+                    },
+                  )
+                : null,
+              invitationStamp: formatScreeningInvitationStamp(
+                row.lastScreeningInvitationAt,
+                row.screeningInvitationSendCount,
+              ),
+            }))}
+          />
         )}
       </div>
     </main>
-  );
-}
-
-function TrackerTableRow({
-  row,
-}: {
-  row: Awaited<ReturnType<typeof listTrackerApplications>>[number];
-}) {
-  const { application, workflow } = row;
-
-  return (
-    <tr>
-      <td>
-        <strong>
-          {application.firstName} {application.lastName}
-        </strong>
-        <div className="ctd-subtle">{application.email}</div>
-        <div className="ctd-subtle">{application.mobilePhone}</div>
-      </td>
-      <td>{formatTerritory(application.primaryTerritory) || "—"}</td>
-      <td className="ctd-nowrap">{formatSubmittedAt(application.submittedAt)}</td>
-      <td>
-        <span className={`ctd-badge ctd-badge-${workflow.currentStatus}`}>
-          {WORKFLOW_STATUS_LABELS[workflow.currentStatus]}
-        </span>
-      </td>
-      <td>{workflow.nextAction || "—"}</td>
-      <td>
-        <FollowUpCell
-          iso={workflow.nextFollowUpAt}
-          overdue={row.hasOverdueFollowUp}
-          dueToday={row.hasDueTodayFollowUp}
-        />
-      </td>
-      <td>
-        {workflow.screeningScheduledAt
-          ? formatInstantInTimeZone(
-              workflow.screeningScheduledAt,
-              workflow.screeningTimezone || "America/Chicago",
-              { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" },
-            )
-          : "—"}
-      </td>
-      <td className="ctd-nowrap">
-        <Link
-          className="ctd-tablelink"
-          href={`/tournament-director/admin/${application.id}`}
-        >
-          Review
-        </Link>
-      </td>
-    </tr>
-  );
-}
-
-function TrackerCard({
-  row,
-}: {
-  row: Awaited<ReturnType<typeof listTrackerApplications>>[number];
-}) {
-  const { application, workflow } = row;
-
-  return (
-    <article className="ctd-trackercard">
-      <div className="ctd-admin-head" style={{ paddingTop: 0 }}>
-        <div>
-          <strong>
-            {application.firstName} {application.lastName}
-          </strong>
-          <div className="ctd-subtle">{application.email}</div>
-          <div className="ctd-subtle">{application.mobilePhone}</div>
-        </div>
-        <span className={`ctd-badge ctd-badge-${workflow.currentStatus}`}>
-          {WORKFLOW_STATUS_LABELS[workflow.currentStatus]}
-        </span>
-      </div>
-      <p className="ctd-subtle">
-        Territory: {formatTerritory(application.primaryTerritory) || "—"}
-      </p>
-      <p className="ctd-subtle">
-        Submitted: {formatSubmittedAt(application.submittedAt)}
-      </p>
-      <p className="ctd-subtle">Next action: {workflow.nextAction || "—"}</p>
-      <FollowUpCell
-        iso={workflow.nextFollowUpAt}
-        overdue={row.hasOverdueFollowUp}
-        dueToday={row.hasDueTodayFollowUp}
-      />
-      {workflow.screeningScheduledAt ? (
-        <p className="ctd-subtle">
-          Screening:{" "}
-          {formatInstantInTimeZone(
-            workflow.screeningScheduledAt,
-            workflow.screeningTimezone || "America/Chicago",
-            { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" },
-          )}
-        </p>
-      ) : null}
-      <Link
-        className="ctd-tablelink"
-        href={`/tournament-director/admin/${application.id}`}
-      >
-        Review complete application
-      </Link>
-    </article>
-  );
-}
-
-function FollowUpCell({
-  iso,
-  overdue,
-  dueToday,
-}: {
-  iso: string | null;
-  overdue: boolean;
-  dueToday: boolean;
-}) {
-  return (
-    <div>
-      <div>{iso ? formatSubmittedAt(iso) : "—"}</div>
-      {overdue ? <span className="ctd-flag ctd-flag-overdue">Overdue</span> : null}
-      {dueToday ? <span className="ctd-flag ctd-flag-today">Due today</span> : null}
-    </div>
   );
 }

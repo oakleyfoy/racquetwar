@@ -15,7 +15,7 @@ export type ScreeningInvitationApplication = CandidateEmailContext["application"
 };
 
 export type ScreeningInvitationResult =
-  | { ok: true; statusChanged: true }
+  | { ok: true; statusChanged: boolean }
   | {
       ok: false;
       statusChanged: false;
@@ -97,12 +97,17 @@ export async function deliverScreeningInvitation(
     return { ok: false, statusChanged: false, reason: "send_failed" };
   }
 
-  await deps.markInvited(application.id, previousStatus);
+  const alreadyInvited = previousStatus === "screening_invited";
+  if (!alreadyInvited) {
+    await deps.markInvited(application.id, previousStatus);
+  }
   await deps.recordActivity(application.id, {
     sent: true,
     emailType: "screening_invitation",
-    detail: "Sent Microsoft Bookings screening invitation.",
+    detail: alreadyInvited
+      ? "Resent Microsoft Bookings screening invitation."
+      : "Sent Microsoft Bookings screening invitation.",
   });
 
-  return { ok: true, statusChanged: true };
+  return { ok: true, statusChanged: !alreadyInvited };
 }

@@ -26,6 +26,7 @@ import { getScreeningBookingUrl } from "@/lib/ctd/scheduling";
 import { getWorkspace } from "@/lib/ctd/workflow-db";
 import {
   formatInstantInTimeZone,
+  formatScreeningInvitationStamp,
   followUpUrgency,
   splitDateAndTimeForInput,
 } from "@/lib/ctd/workflow-time";
@@ -115,6 +116,15 @@ export default async function AdminApplicationDetailPage({
   if (!workspace) notFound();
 
   const { application, workflow, notes, followUps, activities } = workspace;
+  const invitationActivities = activities.filter(
+    (activity) =>
+      activity.activityType === "candidate_email_sent" &&
+      activity.newValue === "screening_invitation",
+  );
+  const invitationStamp = formatScreeningInvitationStamp(
+    invitationActivities[0]?.createdAt,
+    invitationActivities.length,
+  );
   const directorRecord = await getDirectorByApplicationId(application.id);
   const sections = buildReport(application);
   const flash = notice ? NOTICES[notice] : saved ? "Changes saved." : null;
@@ -419,6 +429,7 @@ export default async function AdminApplicationDetailPage({
             Primary path: send Oakley&apos;s Microsoft Bookings invitation, then
             confirm the appointment the candidate booked.
           </p>
+          {invitationStamp ? <p className="ctd-subtle">{invitationStamp}</p> : null}
           {bookingUrl ? (
             <AdminConfirmForm
               action={sendScreeningInvitationAction}
