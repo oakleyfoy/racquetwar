@@ -2,13 +2,18 @@
 
 import { useFormStatus } from "react-dom";
 
+import type { DirectorFormMode } from "@/lib/ctd/form-preview";
+
 export function PortalSubmitButtons({
   canSubmit,
   submitLabel = "Submit",
+  mode = "director",
 }: {
   canSubmit: boolean;
   submitLabel?: string;
+  mode?: DirectorFormMode;
 }) {
+  const isPreview = mode === "admin-preview";
   const { pending } = useFormStatus();
 
   return (
@@ -18,9 +23,13 @@ export function PortalSubmitButtons({
         type="submit"
         name="intent"
         value="draft"
-        disabled={pending}
+        disabled={pending || isPreview}
       >
-        {pending ? "Saving…" : "Save draft"}
+        {isPreview
+          ? "SAVE DRAFT — PREVIEW ONLY"
+          : pending
+            ? "Saving…"
+            : "Save draft"}
       </button>
       {canSubmit ? (
         <button
@@ -28,9 +37,13 @@ export function PortalSubmitButtons({
           type="submit"
           name="intent"
           value="submit"
-          disabled={pending}
+          disabled={pending || isPreview}
         >
-          {pending ? "Submitting…" : submitLabel}
+          {isPreview
+            ? "SUBMIT — PREVIEW ONLY"
+            : pending
+              ? "Submitting…"
+              : submitLabel}
         </button>
       ) : null}
     </div>

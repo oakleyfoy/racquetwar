@@ -612,7 +612,7 @@
 
 .ctd-submit:disabled {
   background: #9bb3ab;
-  cursor: progress;
+  cursor: not-allowed;
 }
 
 .ctd-submit:focus-visible,
@@ -1435,6 +1435,57 @@
 
 .ctd-callbox p {
   margin: 0 0 6px;
+}
+
+.ctd-admin-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 18px;
+}
+
+.ctd-admin-navlink {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  border: 1px solid var(--ctd-brand);
+  border-radius: 999px;
+  background: var(--ctd-surface);
+  color: var(--ctd-brand);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.ctd-admin-navlink:hover {
+  background: var(--ctd-brand);
+  color: #ffffff;
+}
+
+.ctd-preview-banner {
+  margin: 0 0 18px;
+  padding: 16px 18px;
+  border: 2px solid #8a5300;
+  border-radius: var(--ctd-radius);
+  background: #fff4e2;
+  color: #5c3700;
+}
+
+.ctd-preview-banner strong {
+  display: block;
+  margin-bottom: 6px;
+  letter-spacing: 0.02em;
+}
+
+.ctd-preview-banner p {
+  margin: 0;
+}
+
+a.ctd-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  margin-top: 12px;
 }
 
 .ctd-buttonrow {

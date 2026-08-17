@@ -13,6 +13,7 @@ import {
   SPONSORSHIP_STAGES,
 } from "@/lib/ctd/portal-domain";
 import { calculateSponsorshipSplit, formatCents, parseCents } from "@/lib/ctd/portal-money";
+import type { DirectorFormMode } from "@/lib/ctd/form-preview";
 import type { EventProposalRecord, SponsorshipBenefitInput, SponsorshipInput } from "@/lib/ctd/portal-db";
 
 import { PortalSubmitButtons } from "./portal-submit-buttons";
@@ -33,12 +34,15 @@ export function PortalSponsorshipForm({
   directorName,
   events,
   canEdit,
+  mode = "director",
 }: {
   request: SponsorshipInput & { id: string };
   directorName: string;
   events: EventProposalRecord[];
   canEdit: boolean;
+  mode?: DirectorFormMode;
 }) {
+  const isPreview = mode === "admin-preview";
   const [benefits, setBenefits] = useState(defaultBenefits(request.benefits));
   const [cashAmount, setCashAmount] = useState(request.cashAmount);
   const [requestedNoncash, setRequestedNoncash] = useState(request.requestedNoncashValue);
@@ -60,12 +64,17 @@ export function PortalSponsorshipForm({
     return {
       cash: calculateSponsorshipSplit(cash, 0),
       requestedNoncash: noncash,
+      requestedNoncashSplit: calculateSponsorshipSplit(0, noncash),
     };
   }, [cashAmount, includesNoncash, requestedNoncash]);
 
   return (
-    <form className="ctd-form" action={saveSponsorshipFormAction}>
-      <input type="hidden" name="id" value={request.id} />
+    <form
+      className="ctd-form"
+      action={isPreview ? undefined : saveSponsorshipFormAction}
+      onSubmit={isPreview ? (event) => event.preventDefault() : undefined}
+    >
+      {isPreview ? null : <input type="hidden" name="id" value={request.id} />}
       <input type="hidden" name="benefitsJson" value={JSON.stringify(benefits)} />
 
       <fieldset className="ctd-fieldset" disabled={!canEdit}>
@@ -201,8 +210,14 @@ export function PortalSponsorshipForm({
         )}
         <div className="ctd-field">
           <label className="ctd-label" htmlFor="supportingFile">Sponsorship proposal or correspondence</label>
-          <input id="supportingFile" name="supportingFile" className="ctd-input" type="file" accept={ATTACHMENT_ACCEPT} />
-          <p className="ctd-subtle">PDF, DOCX, XLSX, JPG or PNG. 8 MB limit.</p>
+          {isPreview ? (
+            <p className="ctd-subtle">File uploads are disabled in preview mode.</p>
+          ) : (
+            <>
+              <input id="supportingFile" name="supportingFile" className="ctd-input" type="file" accept={ATTACHMENT_ACCEPT} />
+              <p className="ctd-subtle">PDF, DOCX, XLSX, JPG or PNG. 8 MB limit.</p>
+            </>
+          )}
         </div>
         <div className="ctd-field">
           <label className="ctd-label" htmlFor="additionalNotes">Additional notes</label>
@@ -255,6 +270,8 @@ export function PortalSponsorshipForm({
           <div><dt>War Tournaments share: 25%</dt><dd>{formatCents(preview.cash.cashWarCents)}</dd></div>
           <div><dt>Director share: 75%</dt><dd>{formatCents(preview.cash.cashDirectorCents)}</dd></div>
           <div><dt>Requested noncash value</dt><dd>{formatCents(preview.requestedNoncash)} (request only)</dd></div>
+          <div><dt>Requested noncash — War Tournaments share 25% (illustration only)</dt><dd>{formatCents(preview.requestedNoncashSplit.noncashWarCents)}</dd></div>
+          <div><dt>Requested noncash — Director share 75% (illustration only)</dt><dd>{formatCents(preview.requestedNoncashSplit.noncashDirectorCents)}</dd></div>
           <div><dt>Approved noncash value</dt><dd>$0.00 until War Tournaments approves a value</dd></div>
         </dl>
         <p className="ctd-notice">{DOUBLE_COUNT_RULE}</p>
@@ -274,7 +291,13 @@ export function PortalSponsorshipForm({
         ))}
       </fieldset>
 
-      {canEdit ? <PortalSubmitButtons canSubmit submitLabel="Submit request" /> : null}
+      {canEdit ? (
+        <PortalSubmitButtons
+          canSubmit
+          mode={mode}
+          submitLabel="Submit request"
+        />
+      ) : null}
     </form>
   );
 }

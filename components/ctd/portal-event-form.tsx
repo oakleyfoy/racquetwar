@@ -20,6 +20,7 @@ import {
   parseCents,
   parseQuantity,
 } from "@/lib/ctd/portal-money";
+import type { DirectorFormMode } from "@/lib/ctd/form-preview";
 import type { BudgetItemInput, EventProposalRecord } from "@/lib/ctd/portal-db";
 
 import { PortalSubmitButtons } from "./portal-submit-buttons";
@@ -41,11 +42,14 @@ export function PortalEventForm({
   proposal,
   directorName,
   canEdit,
+  mode = "director",
 }: {
   proposal: EventProposalRecord;
   directorName: string;
   canEdit: boolean;
+  mode?: DirectorFormMode;
 }) {
+  const isPreview = mode === "admin-preview";
   const [items, setItems] = useState<BudgetItemInput[]>(
     proposal.items.length ? proposal.items : [emptyItem()],
   );
@@ -83,8 +87,12 @@ export function PortalEventForm({
   }
 
   return (
-    <form className="ctd-form" action={saveEventFormAction}>
-      <input type="hidden" name="id" value={proposal.id} />
+    <form
+      className="ctd-form"
+      action={isPreview ? undefined : saveEventFormAction}
+      onSubmit={isPreview ? (event) => event.preventDefault() : undefined}
+    >
+      {isPreview ? null : <input type="hidden" name="id" value={proposal.id} />}
       <input type="hidden" name="budgetJson" value={JSON.stringify(items)} />
 
       <fieldset className="ctd-fieldset" disabled={!canEdit}>
@@ -269,8 +277,14 @@ export function PortalEventForm({
         </div>
         <div className="ctd-field">
           <label className="ctd-label" htmlFor="supportingFile">Optional supporting document</label>
-          <input id="supportingFile" name="supportingFile" className="ctd-input" type="file" accept={ATTACHMENT_ACCEPT} />
-          <p className="ctd-subtle">PDF, DOCX, XLSX, JPG or PNG. 8 MB limit.</p>
+          {isPreview ? (
+            <p className="ctd-subtle">File uploads are disabled in preview mode.</p>
+          ) : (
+            <>
+              <input id="supportingFile" name="supportingFile" className="ctd-input" type="file" accept={ATTACHMENT_ACCEPT} />
+              <p className="ctd-subtle">PDF, DOCX, XLSX, JPG or PNG. 8 MB limit.</p>
+            </>
+          )}
         </div>
         <div className="ctd-field">
           <label className="ctd-label" htmlFor="additionalNotes">Additional notes</label>
@@ -403,7 +417,13 @@ export function PortalEventForm({
         ))}
       </fieldset>
 
-      {canEdit ? <PortalSubmitButtons canSubmit submitLabel="Submit proposal" /> : null}
+      {canEdit ? (
+        <PortalSubmitButtons
+          canSubmit
+          mode={mode}
+          submitLabel="Submit proposal"
+        />
+      ) : null}
     </form>
   );
 }

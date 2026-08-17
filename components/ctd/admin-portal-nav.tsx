@@ -2,21 +2,27 @@ import Link from "next/link";
 
 export function AdminPortalNav() {
   return (
-    <nav className="ctd-buttonrow" aria-label="Administration">
-      <Link className="ctd-tablelink" href="/tournament-director/admin">
+    <nav className="ctd-admin-nav" aria-label="Administration">
+      <Link className="ctd-admin-navlink" href="/tournament-director/admin">
         Applicants
       </Link>
-      <Link className="ctd-tablelink" href="/tournament-director/admin/events">
+      <Link className="ctd-admin-navlink" href="/tournament-director/admin/events">
         Event proposals
       </Link>
       <Link
-        className="ctd-tablelink"
+        className="ctd-admin-navlink"
         href="/tournament-director/admin/sponsorships"
       >
         Sponsorships
       </Link>
-      <Link className="ctd-tablelink" href="/tournament-director/admin/directors">
+      <Link className="ctd-admin-navlink" href="/tournament-director/admin/directors">
         Directors
+      </Link>
+      <Link
+        className="ctd-admin-navlink"
+        href="/tournament-director/admin/forms-preview"
+      >
+        Preview Director Forms
       </Link>
     </nav>
   );
