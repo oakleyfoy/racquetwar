@@ -773,6 +773,10 @@
   outline-offset: 2px;
 }
 
+.ctd-inlineform {
+  display: inline;
+}
+
 .ctd-statusbar {
   display: flex;
   flex-wrap: wrap;

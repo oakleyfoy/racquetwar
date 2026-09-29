@@ -1,5 +1,5 @@
 import { readFormFile } from "./attachments";
-import { query } from "./db";
+import { query, withTransaction } from "./db";
 import type { DirectorRecord } from "./director-db";
 import {
   calculateEventBudget,
@@ -691,6 +691,34 @@ export async function submitEventProposal(id: string, directorId: string) {
     createdBy: directorId,
   });
   return getEventProposal(id, directorId);
+}
+
+export async function deleteEventProposal(id: string) {
+  if (!UUID_PATTERN.test(id)) return false;
+
+  return withTransaction(async (client) => {
+    await client.query(
+      `delete from ctd_portal_notes where entity_type = 'event' and entity_id = $1`,
+      [id],
+    );
+    await client.query(
+      `delete from ctd_portal_messages where entity_type = 'event' and entity_id = $1`,
+      [id],
+    );
+    await client.query(
+      `delete from ctd_portal_activities where entity_type = 'event' and entity_id = $1`,
+      [id],
+    );
+    await client.query(
+      `delete from ctd_portal_files where entity_type = 'event' and entity_id = $1`,
+      [id],
+    );
+    const result = await client.query(
+      `delete from ctd_event_proposals where id = $1`,
+      [id],
+    );
+    return (result.rowCount ?? 0) > 0;
+  });
 }
 
 export async function withdrawEventProposal(id: string, directorId: string) {

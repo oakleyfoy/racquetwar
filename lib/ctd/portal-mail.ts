@@ -1,7 +1,13 @@
 import { escapeHtml } from "./html";
 import { getStaffNotifyAddress, sendCandidateMessage } from "./mail";
 import { recordPortalActivity } from "./portal-db";
-import { BRAND_NAME, CONTACT_EMAIL, CONTACT_NAME, OPERATOR_NAME } from "./site";
+import {
+  APP_URL,
+  BRAND_NAME,
+  CONTACT_EMAIL,
+  CONTACT_NAME,
+  OPERATOR_NAME,
+} from "./site";
 
 export const PORTAL_MAIL_TYPES = [
   "event_submitted",
@@ -110,6 +116,63 @@ export function buildPortalEmail(
   }
 }
 
+export function buildStaffPortalAlert(input: {
+  staffSubject: string;
+  kind: "event" | "sponsorship";
+  directorName: string;
+  directorEmail: string;
+  title: string;
+  location?: string;
+  reviewUrl: string;
+}) {
+  const kindLabel = input.kind === "event" ? "event proposal" : "sponsorship request";
+  const locationLine = input.location?.trim()
+    ? `<p><strong>Location:</strong> ${escapeHtml(input.location)}</p>`
+    : "";
+  const locationText = input.location?.trim()
+    ? `Location: ${input.location}\n`
+    : "";
+
+  return {
+    subject: input.staffSubject,
+    html: `
+      <div style="font-family:Arial,Helvetica,sans-serif;color:#10181a;line-height:1.7;max-width:640px;">
+        <h2 style="margin:0 0 16px;color:#006d56;">New ${escapeHtml(kindLabel)} submitted</h2>
+        <p>A Tournament Director submitted a ${escapeHtml(kindLabel)} for review.</p>
+        <p><strong>Director:</strong> ${escapeHtml(input.directorName)} (${escapeHtml(input.directorEmail)})</p>
+        <p><strong>${input.kind === "event" ? "Event" : "Sponsor"}:</strong> ${escapeHtml(input.title)}</p>
+        ${locationLine}
+        <p style="margin:24px 0;">
+          <a href="${escapeHtml(input.reviewUrl)}" style="display:inline-block;background:#006d56;color:#ffffff;text-decoration:none;font-weight:700;padding:12px 20px;border-radius:999px;">Review in admin</a>
+        </p>
+        <p style="margin:24px 0 0;font-weight:700;color:#006d56;">${escapeHtml(OPERATOR_NAME)} | ${escapeHtml(BRAND_NAME)}</p>
+      </div>`,
+    text: [
+      `New ${kindLabel} submitted`,
+      "",
+      `A Tournament Director submitted a ${kindLabel} for review.`,
+      "",
+      `Director: ${input.directorName} (${input.directorEmail})`,
+      `${input.kind === "event" ? "Event" : "Sponsor"}: ${input.title}`,
+      locationText.trimEnd(),
+      "",
+      `Review: ${input.reviewUrl}`,
+      "",
+      `${OPERATOR_NAME} | ${BRAND_NAME}`,
+    ]
+      .filter((line) => line !== "")
+      .join("\n"),
+  };
+}
+
+export function portalReviewUrl(
+  kind: "event" | "sponsorship",
+  entityId: string,
+) {
+  const segment = kind === "event" ? "events" : "sponsorships";
+  return `${APP_URL}/tournament-director/admin/${segment}/${entityId}`;
+}
+
 export function portalEmailHasForbiddenContent(
   rendered: { subject: string; html: string; text: string },
   internalNote?: string,
@@ -134,14 +197,28 @@ export async function notifyPortal(
     entityType: "event" | "sponsorship";
     entityId: string;
     staffSubject: string;
+    directorName?: string;
+    location?: string;
+    reviewUrl?: string;
   },
 ) {
   const directorMail = buildPortalEmail(type, input);
-  const staff = {
-    subject: input.staffSubject,
-    html: directorMail.html,
-    text: directorMail.text,
-  };
+  const reviewUrl = input.reviewUrl || portalReviewUrl(input.entityType, input.entityId);
+  const staff = type.endsWith("_submitted")
+    ? buildStaffPortalAlert({
+        staffSubject: input.staffSubject,
+        kind: input.entityType,
+        directorName: input.directorName || input.firstName,
+        directorEmail: input.directorEmail,
+        title: input.title,
+        location: input.location,
+        reviewUrl,
+      })
+    : {
+        subject: input.staffSubject,
+        html: directorMail.html,
+        text: directorMail.text,
+      };
 
   try {
     await sendCandidateMessage({
@@ -170,13 +247,17 @@ export async function notifyPortal(
 
   try {
     const staffTo = getStaffNotifyAddress();
-    if (staffTo) {
-      await sendCandidateMessage({
-        to: staffTo,
-        replyTo: input.directorEmail,
-        ...staff,
-      });
+    if (!staffTo) {
+      console.error(
+        "CTD portal staff email skipped because CTD_TO_EMAIL is not configured.",
+      );
+      return;
     }
+    await sendCandidateMessage({
+      to: staffTo,
+      replyTo: input.directorEmail,
+      ...staff,
+    });
   } catch (error) {
     console.error("CTD portal staff email failed", error);
   }

@@ -32,7 +32,7 @@ import {
   withdrawEventProposal,
   withdrawSponsorship,
 } from "@/lib/ctd/portal-db";
-import { directorLoginEmail, notifyPortal } from "@/lib/ctd/portal-mail";
+import { directorLoginEmail, notifyPortal, portalReviewUrl } from "@/lib/ctd/portal-mail";
 
 function portalPath(path: string, notice?: string) {
   return notice
@@ -108,14 +108,21 @@ export async function saveEventFormAction(formData: FormData) {
     });
     if (intent === "submit") {
       const submitted = await submitEventProposal(id, director.id);
-      void notifyPortal("event_submitted", {
-        directorEmail: director.email,
-        firstName: director.firstName,
-        title: submitted?.eventName || "Event proposal",
-        entityType: "event",
-        entityId: id,
-        staffSubject: `Event proposal submitted by ${directorDisplayName(director)}`,
-      }).catch((error) => console.error("CTD portal notify failed", error));
+      try {
+        await notifyPortal("event_submitted", {
+          directorEmail: director.email,
+          firstName: director.firstName,
+          directorName: directorDisplayName(director),
+          title: submitted?.eventName || "Event proposal",
+          location: [submitted?.city, submitted?.state].filter(Boolean).join(", "),
+          entityType: "event",
+          entityId: id,
+          reviewUrl: portalReviewUrl("event", id),
+          staffSubject: `Event proposal submitted by ${directorDisplayName(director)}`,
+        });
+      } catch (error) {
+        console.error("CTD portal notify failed", error);
+      }
       redirect(portalPath(`/events/${id}`, "submitted"));
     }
   } catch (error) {
@@ -169,14 +176,20 @@ export async function saveSponsorshipFormAction(formData: FormData) {
     });
     if (intent === "submit") {
       const submitted = await submitSponsorship(id, director.id);
-      void notifyPortal("sponsorship_submitted", {
-        directorEmail: director.email,
-        firstName: director.firstName,
-        title: submitted?.sponsorName || "Sponsorship request",
-        entityType: "sponsorship",
-        entityId: id,
-        staffSubject: `Sponsorship request submitted by ${directorDisplayName(director)}`,
-      }).catch((error) => console.error("CTD portal notify failed", error));
+      try {
+        await notifyPortal("sponsorship_submitted", {
+          directorEmail: director.email,
+          firstName: director.firstName,
+          directorName: directorDisplayName(director),
+          title: submitted?.sponsorName || "Sponsorship request",
+          entityType: "sponsorship",
+          entityId: id,
+          reviewUrl: portalReviewUrl("sponsorship", id),
+          staffSubject: `Sponsorship request submitted by ${directorDisplayName(director)}`,
+        });
+      } catch (error) {
+        console.error("CTD portal notify failed", error);
+      }
       redirect(portalPath(`/sponsorships/${id}`, "submitted"));
     }
   } catch (error) {

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { AdminDeleteEventProposalForm } from "@/components/ctd/admin-delete-event-proposal-form";
 import { AdminPortalNav } from "@/components/ctd/admin-portal-nav";
 import { requireAdminSession } from "@/lib/ctd/admin-guard";
 import { getDirector } from "@/lib/ctd/director-db";
@@ -246,6 +247,11 @@ export default async function AdminEventWorkspacePage({
             ))}
           </ul>
         </section>
+
+        <AdminDeleteEventProposalForm
+          id={proposal.id}
+          label={proposal.eventName || "this untitled event plan"}
+        />
 
         <section className="ctd-reviewpanel">
           <h2 className="ctd-report-title">Activity</h2>

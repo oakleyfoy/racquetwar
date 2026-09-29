@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { AdminDeleteEventProposalForm } from "@/components/ctd/admin-delete-event-proposal-form";
 import { AdminPortalNav } from "@/components/ctd/admin-portal-nav";
 import { requireAdminSession } from "@/lib/ctd/admin-guard";
 import { listDirectors } from "@/lib/ctd/director-db";
@@ -28,6 +29,8 @@ export default async function AdminEventsPage({
     market?: string;
     sort?: string;
     page?: string;
+    deleted?: string;
+    error?: string;
   }>;
 }) {
   await requireAdminSession();
@@ -55,6 +58,16 @@ export default async function AdminEventsPage({
         <p className="ctd-section-hint">
           {list.total} proposal{list.total === 1 ? "" : "s"}
         </p>
+        {params.deleted ? (
+          <div className="ctd-saved" role="status">
+            Event plan deleted.
+          </div>
+        ) : null}
+        {params.error === "notfound" ? (
+          <div className="ctd-alert" role="alert">
+            That event plan was not found. It may have been deleted already.
+          </div>
+        ) : null}
         <form className="ctd-filters ctd-filters-grid" method="get">
           <input className="ctd-input" type="search" name="search" placeholder="Search event, city, facility, or Director" defaultValue={filters.search} />
           <select className="ctd-select" name="status" defaultValue={filters.status}>
@@ -100,7 +113,9 @@ export default async function AdminEventsPage({
                 {list.rows.map((row) => (
                   <tr key={row.id}>
                     <td>
-                      <strong>{row.eventName}</strong>
+                      <Link className="ctd-tablelink" href={`/tournament-director/admin/events/${row.id}`}>
+                        <strong>{row.eventName}</strong>
+                      </Link>
                       <div className="ctd-subtle">{[row.city, row.state].filter(Boolean).join(", ")}</div>
                       {row.overBudget ? <span className="ctd-flag ctd-flag-overdue">Over budget</span> : null}
                       {row.openAction ? <span className="ctd-flag ctd-flag-today">Open action</span> : null}
@@ -116,10 +131,16 @@ export default async function AdminEventsPage({
                         {EVENT_STATUS_LABELS[row.status]}
                       </span>
                     </td>
-                    <td>
+                    <td className="ctd-nowrap">
                       <Link className="ctd-tablelink" href={`/tournament-director/admin/events/${row.id}`}>
                         Review
                       </Link>
+                      {" · "}
+                      <AdminDeleteEventProposalForm
+                        id={row.id}
+                        label={row.eventName || "this event plan"}
+                        compact
+                      />
                     </td>
                   </tr>
                 ))}

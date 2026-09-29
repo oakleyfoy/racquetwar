@@ -18,6 +18,7 @@ import {
   adminSetSponsorshipStatus,
   approveSponsorship,
   authorizeEventProposal,
+  deleteEventProposal,
   getEventProposal,
   getSponsorship,
   UUID_PATTERN,
@@ -233,6 +234,17 @@ export async function approveSponsorshipAction(formData: FormData) {
     redirect(fail(`/sponsorships/${id}`, error));
   }
   redirect(workspace(`/sponsorships/${id}`, "approved"));
+}
+
+export async function deleteEventProposalAction(formData: FormData) {
+  await requireAdminSession();
+  const id = String(formData.get("id") ?? "");
+  if (!UUID_PATTERN.test(id)) redirect(`${ADMIN}/events`);
+
+  const deleted = await deleteEventProposal(id);
+  redirect(
+    deleted ? `${ADMIN}/events?deleted=1` : `${ADMIN}/events?error=notfound`,
+  );
 }
 
 export async function addPortalNoteAction(formData: FormData) {

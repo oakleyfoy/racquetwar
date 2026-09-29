@@ -41,6 +41,44 @@ describe("portal notify failure isolation", () => {
     );
   });
 
+  it("sends a staff alert when a proposal is submitted", async () => {
+    sendCandidateMessage.mockResolvedValue({ mode: "smtp" });
+    getStaffNotifyAddress.mockReturnValue("oakley@example.com");
+    const { notifyPortal } = await import("./portal-mail");
+
+    await notifyPortal("event_submitted", {
+      directorEmail: "director@example.com",
+      firstName: "Carla",
+      directorName: "Carla Kohls",
+      title: "Grand Junction Open",
+      location: "Grand Junction, Colorado",
+      entityType: "event",
+      entityId: "11111111-1111-1111-1111-111111111111",
+      staffSubject: "Event proposal submitted by Carla Kohls",
+      reviewUrl:
+        "https://apply.wartournaments.com/tournament-director/admin/events/11111111-1111-1111-1111-111111111111",
+    });
+
+    expect(sendCandidateMessage).toHaveBeenCalledTimes(2);
+    expect(sendCandidateMessage).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        to: "director@example.com",
+        subject: "We received your event proposal",
+      }),
+    );
+    expect(sendCandidateMessage).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        to: "oakley@example.com",
+        replyTo: "director@example.com",
+        subject: "Event proposal submitted by Carla Kohls",
+      }),
+    );
+    expect(sendCandidateMessage.mock.calls[1]?.[0].html).toContain("Review in admin");
+    expect(sendCandidateMessage.mock.calls[1]?.[0].html).not.toContain("Hi Carla");
+  });
+
   it("records a successful Director email", async () => {
     sendCandidateMessage.mockResolvedValue({ mode: "smtp" });
     const { notifyPortal } = await import("./portal-mail");

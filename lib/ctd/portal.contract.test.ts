@@ -141,8 +141,12 @@ describe("portal security and isolation contracts", () => {
   it("records activity and isolates email failures from stored submissions", () => {
     expect(portalDb).toContain("insert into ctd_portal_activities");
     expect(portalDb).toContain("activity_type");
-    expect(directorActions).toContain("void notifyPortal");
+    expect(directorActions).toContain("await notifyPortal");
+    expect(directorActions).toContain("portalReviewUrl");
     expect(adminPortalActions).toContain("void notifyPortal");
+    expect(adminPortalActions).toContain("export async function deleteEventProposalAction");
+    expect(portalDb).toContain("export async function deleteEventProposal");
+    expect(directorActions).not.toContain("deleteEventProposal");
     expect(portalDb).not.toContain("notifyPortal");
   });
 });
